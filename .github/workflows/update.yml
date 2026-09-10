@@ -2,9 +2,10 @@ name: 更新黃金觀測室資料
 
 on:
   schedule:
+    # UTC 00:30 / 13:30 = 台灣 08:30 / 21:30（美國數據多在台灣 20:30–21:30 公布，21:30 這輪抓得到當天新數據）
     - cron: "30 0 * * *"
     - cron: "30 13 * * *"
-  workflow_dispatch:
+  workflow_dispatch:      # 也可以在 GitHub 網頁上按「Run workflow」手動更新
 
 permissions:
   contents: write
@@ -12,6 +13,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 8          # 卡住最多 8 分鐘就中止並顯示紅叉，不會無限等
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +23,8 @@ jobs:
 
       - name: 抓資料並判讀
         env:
-          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}   # 強烈建議設定（免費）；沒有時改走 fredgraph.csv，機房 IP 可能被擋
+          PYTHONUNBUFFERED: "1"
         run: python scripts/fetch_data.py
 
       - name: 提交 data.json
