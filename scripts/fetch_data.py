@@ -70,16 +70,21 @@ FUT_MONTH_CODE = {1: "F", 2: "G", 3: "H", 4: "J", 5: "K", 6: "M", 7: "N", 8: "Q"
 # ---------------------------------------------------------------------------
 # 抓資料
 # ---------------------------------------------------------------------------
-def http_get(url: str, retries: int = 3) -> str:
+def http_get(url: str, retries: int = 2, timeout: int = 12) -> str:
+    """短逾時、少重試：任何來源卡住最多拖 ~30 秒，不會讓整個工作掛死。"""
     last = None
+    t0 = time.time()
     for i in range(retries):
         try:
             req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=30) as r:
-                return r.read().decode("utf-8", "replace")
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                body = r.read().decode("utf-8", "replace")
+            print(f"[get] {url.split('?')[0]} ok {time.time()-t0:.1f}s", flush=True)
+            return body
         except Exception as e:  # noqa: BLE001
             last = e
-            time.sleep(2 * (i + 1))
+            print(f"[get] {url.split('?')[0]} fail#{i+1}: {e}", flush=True)
+            time.sleep(1)
     raise RuntimeError(f"GET failed {url}: {last}")
 
 
@@ -111,6 +116,7 @@ def fetch_fred(series: str, start: str, seed: bool) -> list[tuple[str, float]]:
             except ValueError:
                 pass
         return out
+    # 沒有 API key 時走 fredgraph.csv（GitHub Actions 的機房 IP 偶爾會被 FRED 擋，建議設定 FRED_API_KEY）
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}"
     return parse_csv(http_get(url))
 
@@ -120,7 +126,13 @@ def fetch_yahoo(symbol: str, rng: str, seed: bool) -> list[tuple[str, float]]:
         p = SEED_DIR / (symbol.replace("=", "_").replace(".", "_") + ".csv")
         return parse_csv(p.read_text()) if p.exists() else []
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(symbol)}?range={rng}&interval=1d"
-    j = json.loads(http_get(url))
+    try:
+        j = json.loads(http_get(url))
+    except Exception as e:  # noqa: BLE001
+        if symbol == "GC=F":
+            print(f"[warn] Yahoo GC=F 失敗（{e}），改用 stooq 現貨黃金 XAUUSD", flush=True)
+            return fetch_stooq("xauusd")
+        raise
     res = (j.get("chart") or {}).get("result") or []
     if not res:
         return []
@@ -138,6 +150,19 @@ def fetch_yahoo(symbol: str, rng: str, seed: bool) -> list[tuple[str, float]]:
     for d, v in out:
         dedup[d] = v
     return sorted(dedup.items())
+
+
+def fetch_stooq(symbol: str) -> list[tuple[str, float]]:
+    """stooq 免費日線 CSV（Date,Open,High,Low,Close,Volume）。黃金現貨代碼 xauusd。"""
+    text = http_get(f"https://stooq.com/q/d/l/?s={symbol}&i=d")
+    out = []
+    for r in csv.reader(io.StringIO(text)):
+        if len(r) >= 5 and r[0][:1].isdigit():
+            try:
+                out.append((r[0], float(r[4])))
+            except ValueError:
+                pass
+    return out[-140:]
 
 
 # ---------------------------------------------------------------------------
