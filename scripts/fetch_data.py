@@ -51,6 +51,7 @@ ECON_SERIES = [
 
 MARKET_SERIES = [
     dict(id="GC=F", src="yahoo", name="黃金期貨（COMEX）", unit="美元／盎司", dec=1, diff_unit="美元", pct=True),
+    dict(id="DX-Y.NYB", src="yahoo", rng="2y", name="美元指數 DXY", unit="點", dec=2, diff_unit="點", pct=True),
     dict(id="DFII10", src="fred", name="10 年期實質殖利率", unit="%", dec=2, diff_unit="bp"),
     dict(id="DGS10", src="fred", name="10 年期美債殖利率", unit="%", dec=2, diff_unit="bp"),
     dict(id="DGS2", src="fred", name="2 年期美債殖利率", unit="%", dec=2, diff_unit="bp"),
@@ -121,11 +122,12 @@ def fetch_fred(series: str, start: str, seed: bool) -> list[tuple[str, float]]:
     return parse_csv(http_get(url))
 
 
-def fetch_yahoo(symbol: str, rng: str, seed: bool) -> list[tuple[str, float]]:
+def fetch_yahoo(symbol: str, rng: str, seed: bool, interval: str = "1d") -> list[tuple[str, float]]:
     if seed:
-        p = SEED_DIR / (symbol.replace("=", "_").replace(".", "_") + ".csv")
+        suffix = "" if interval == "1d" else f"_{interval}"
+        p = SEED_DIR / (symbol.replace("=", "_").replace(".", "_") + suffix + ".csv")
         return parse_csv(p.read_text()) if p.exists() else []
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(symbol)}?range={rng}&interval=1d"
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(symbol)}?range={rng}&interval={interval}"
     try:
         j = json.loads(http_get(url))
     except Exception as e:  # noqa: BLE001
@@ -144,6 +146,8 @@ def fetch_yahoo(symbol: str, rng: str, seed: bool) -> list[tuple[str, float]]:
         if c is None:
             continue
         d = datetime.fromtimestamp(t, tz=timezone.utc).date().isoformat()
+        if interval != "1d":
+            d = d[:7] + "-01"
         out.append((d, float(c)))
     # 同一天保留最後一筆
     dedup = {}
@@ -293,13 +297,13 @@ def score_rates(fedx):
     return 0, "市場沒押明顯方向", src
 
 
-def score_dollar(st):
-    """美元：廣義美元指數 20 期變化。跌 >0.5% 支持黃金；漲 >0.5% 壓力。"""
+def score_dollar(st, label="美元指數 DXY"):
+    """美元：DXY（抓不到時用廣義美元指數）20 期變化。跌 ≥0.5% 支持黃金；漲 ≥0.5% 壓力。"""
     if not st or st.get("raw_chg20") is None:
         return 0, "資料不足", ""
     base = st["spark"][-21] if len(st["spark"]) >= 21 else None
     pct = (st["raw_chg20"] / base * 100) if base else 0
-    src = f"廣義美元指數 20 個交易日變化 {st['chg20']}（{pct:+.2f}%）"
+    src = f"{label} {st['latest']:.2f}，20 個交易日變化 {st['chg20']}（{pct:+.2f}%）"
     if pct <= -0.5:
         return 1, "美元轉弱", src
     if pct >= 0.5:
@@ -371,6 +375,150 @@ def build_verdict(pillars):
 
 
 # ---------------------------------------------------------------------------
+# 美元指數強弱定位
+# ---------------------------------------------------------------------------
+DXY_ZONES = [  # 市場慣用區間：1973 年 3 月基期 = 100，站上 100 代表比基期強
+    dict(lo=0, hi=90, label="弱勢", gold="對黃金有利"),
+    dict(lo=90, hi=95, label="偏弱", gold="對黃金偏有利"),
+    dict(lo=95, hi=100, label="中性", gold="影響不大"),
+    dict(lo=100, hi=105, label="偏強", gold="對黃金偏不利"),
+    dict(lo=105, hi=999, label="強勢", gold="對黃金不利"),
+]
+
+
+def dxy_context(st, seed):
+    if not st:
+        return None
+    lv = st["latest"]
+    zone = next(z for z in DXY_ZONES if z["lo"] <= lv < z["hi"])
+    pct10 = med10 = lo10 = hi10 = None
+    try:
+        m = fetch_yahoo("DX-Y.NYB", "10y", seed, interval="1mo")
+        vals = sorted(v for _, v in m)
+        if len(vals) >= 60:
+            pct10 = round(sum(1 for v in vals if v <= lv) / len(vals) * 100)
+            med10 = r(vals[len(vals) // 2], 2)
+            lo10, hi10 = r(vals[0], 2), r(vals[-1], 2)
+    except Exception as e:  # noqa: BLE001
+        print(f"[warn] DXY 10y: {e}", flush=True)
+    ma = st.get("ma200")
+    return dict(level=lv, date=st["latest_date"], zone=zone["label"], zone_gold=zone["gold"],
+                zones=DXY_ZONES[:-1] + [dict(DXY_ZONES[-1], hi=115)],
+                pct10y=pct10, median10y=med10, low10y=lo10, high10y=hi10,
+                ma200=ma, vs_ma200_pct=(r((lv / ma - 1) * 100, 2) if ma else None))
+
+
+# ---------------------------------------------------------------------------
+# 每個指標對黃金的加減分（−2 … +2）與分類
+# ---------------------------------------------------------------------------
+def _band(x, cuts):
+    """cuts = (強負, 負, 正, 強正) 門檻；x ≤ 強負 → −2 … x ≥ 強正 → +2"""
+    a, b, c, d = cuts
+    if x is None:
+        return 0
+    if x <= a:
+        return -2
+    if x <= b:
+        return -1
+    if x >= d:
+        return 2
+    if x >= c:
+        return 1
+    return 0
+
+
+def _pct20(st):
+    if not st or st.get("raw_chg20") is None or len(st["spark"]) < 21:
+        return None
+    return st["raw_chg20"] / st["spark"][-21] * 100
+
+
+def indicator_score(sid, st, extra):
+    """回傳 (分數, 一句話理由)。正數＝對黃金有利。"""
+    if not st:
+        return 0, "資料不足"
+    if sid in ("CPIAUCSL", "CPILFESL", "PCEPI", "PCEPILFE", "PPIFIS"):
+        a3, yy = extra.get("ann3m"), extra.get("yoy")
+        if a3 is None or yy is None:
+            return 0, "資料不足"
+        gap = a3 - yy  # 近 3 個月比過去一年低 → 通膨降溫 → 降息空間變大
+        sc = -_band(gap, (-1.5, -0.5, 0.5, 1.5))
+        word = "降溫" if gap < -0.5 else "升溫" if gap > 0.5 else "持平"
+        return sc, f"近 3 個月年化 {a3:.1f}% vs 年增 {yy:.1f}%，通膨{word}"
+    if sid == "PAYEMS":
+        sp = [v for v in st["spark"] if v is not None][-3:]
+        avg = sum(sp) / len(sp)
+        sc = -_band(avg, (50, 100, 175, 250))  # 就業越弱越支持黃金
+        return sc, f"近 3 個月平均新增 {avg:.0f} 千人"
+    if sid == "UNRATE":
+        sp = [v for v in st["spark"] if v is not None][-12:]
+        rise = st["latest"] - min(sp)
+        sc = 2 if rise >= 0.5 else 1 if rise >= 0.3 else (-1 if st["latest"] < sp[0] - 0.2 else 0)
+        return sc, f"比近 12 個月低點高 {rise:.1f} 個百分點"
+    if sid in ("DGS2", "DGS10"):
+        bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
+        return -_band(bp, (-20, -8, 8, 20)), (f"20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
+    if sid == "DFII10":
+        bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
+        return -_band(bp, (-25, -10, 10, 25)), (f"20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
+    if sid == "T10YIE":
+        bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
+        return _band(bp, (-20, -8, 8, 20)), (f"通膨預期 20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
+    if sid in ("DX-Y.NYB", "DTWEXBGS"):
+        pc = _pct20(st)
+        return -_band(pc, (-1.5, -0.5, 0.5, 1.5)), (f"20 日 {pc:+.2f}%" if pc is not None else "資料不足")
+    if sid in ("DCOILWTICO", "DCOILBRENTEU"):
+        pc = _pct20(st)
+        if pc is None and len(st["spark"]) >= 2:
+            pc = (st["spark"][-1] / st["spark"][0] - 1) * 100
+        return _band(pc, (-10, -5, 5, 10)), (f"約 1 個月 {pc:+.1f}%，通膨與地緣風險溫度" if pc is not None else "資料不足")
+    if sid == "VIXCLS":
+        v = st["latest"]
+        sc = 2 if v >= 25 else 1 if v >= 20 else -1 if v <= 13 else 0
+        return sc, f"VIX {v:.1f}（20 以上算緊張）"
+    if sid == "BAMLH0A0HYM2":
+        bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
+        return _band(bp, (-50, -20, 20, 50)), (f"20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
+    return 0, ""
+
+
+CATEGORIES = [
+    dict(key="rates", name="利率與降息預期", icon="%", desc="利率越低、越押降息，抱黃金的機會成本越低",
+         ids=["FEDX", "DFII10", "DGS2", "DGS10"]),
+    dict(key="dollar", name="美元", icon="$", desc="黃金用美元計價，美元越弱金價越容易撐住",
+         ids=["DX-Y.NYB", "DTWEXBGS"]),
+    dict(key="inflation", name="通膨", icon="↗", desc="通膨降溫＝聯準會有空間降息；通膨預期升溫＝抗通膨需求",
+         ids=["CPILFESL", "CPIAUCSL", "PCEPILFE", "PCEPI", "PPIFIS", "T10YIE"]),
+    dict(key="jobs", name="就業", icon="◎", desc="就業轉弱會逼聯準會降息，是黃金的間接利多",
+         ids=["PAYEMS", "UNRATE"]),
+    dict(key="risk", name="避險與能源", icon="⚑", desc="油價、恐慌指數、信用利差反映市場怕不怕",
+         ids=["DCOILWTICO", "DCOILBRENTEU", "VIXCLS", "BAMLH0A0HYM2"]),
+]
+
+
+def build_categories(econ, markets, fedx):
+    pool = {e["id"]: e for e in econ + markets}
+    # 把降息預期也做成一張「指標卡」
+    h = fedx["horizons"][0] if fedx.get("horizons") else None
+    if h:
+        bp = h["vs_now_bp"]
+        pool["FEDX"] = dict(id="FEDX", name="降息預期（期貨隱含年底利率）", unit="%", kind="fed",
+                            stats=dict(latest=h["implied"], latest_date=h["date"], chg=f"{bp:+.0f} bp vs 現在",
+                                       spark=None),
+                            gold_score=-_band(bp, (-50, -25, 25, 50)),
+                            gold_reason=f"比目前利率中點 {fedx['target_mid']:.3f}% 高 {bp:+.0f} bp（約 {abs(round(bp/25))} 碼{'升息' if bp > 0 else '降息'}）"
+                            if bp else "與目前利率相同")
+    out = []
+    for c in CATEGORIES:
+        items = [pool[i] for i in c["ids"] if i in pool and pool[i].get("stats")]
+        total = sum(it.get("gold_score", 0) for it in items)
+        mx = 2 * len(items) or 1
+        out.append(dict(key=c["key"], name=c["name"], icon=c["icon"], desc=c["desc"], ids=[it["id"] for it in items],
+                        score=total, max=mx))
+    return out, pool
+
+
+# ---------------------------------------------------------------------------
 # 下一個數據（讀 data/calendar.json）
 # ---------------------------------------------------------------------------
 def next_event(now_tpe: datetime):
@@ -384,14 +532,14 @@ def next_event(now_tpe: datetime):
             t = datetime.strptime(ev["time_tpe"], "%Y-%m-%d %H:%M").replace(tzinfo=TAIPEI)
         except (KeyError, ValueError):
             continue
-        if t >= now_tpe - timedelta(hours=2):
+        if now_tpe - timedelta(hours=2) <= t <= now_tpe + timedelta(days=30):
             upcoming.append((t, ev))
     upcoming.sort(key=lambda x: x[0])
     if not upcoming:
         return None, []
     wd = "一二三四五六日"
     lst = []
-    for t, ev in upcoming[:8]:
+    for t, ev in upcoming:
         o = dict(ev)
         o["time_tpe"] = t.strftime("%m/%d %H:%M")
         o["date_iso"] = t.date().isoformat()
@@ -436,21 +584,26 @@ def main():
         extra = {}
         if s["kind"] == "index_mom" and rows:
             extra = dict(ann3m=r(annualized_3m(rows), 2), yoy=r(yoy(rows), 2))
+        gs, why = indicator_score(s["id"], st, extra)
         econ.append(dict(id=s["id"], name=s["name"], unit=s["unit"], period=(rows[-1][0][:7] if rows else None),
-                         stats=st, **extra))
+                         stats=st, gold_score=gs, gold_reason=why, **extra))
 
     # ---- 金融市場 ----
     markets = []
     st_by_id = {}
     for s in MARKET_SERIES:
         try:
-            rows = fetch_yahoo(s["id"], "6mo", seed) if s["src"] == "yahoo" else fetch_fred(s["id"], start_daily, seed)
+            rows = fetch_yahoo(s["id"], s.get("rng", "6mo"), seed) if s["src"] == "yahoo" else fetch_fred(s["id"], start_daily, seed)
         except Exception as e:  # noqa: BLE001
             errors.append(f"{s['id']}: {e}")
             rows = []
         st = series_stats(rows, s["dec"], s["diff_unit"], s.get("pct", False))
+        if st and len(rows) >= 200:
+            st["ma200"] = r(sum(v for _, v in rows[-200:]) / 200, 2)
         st_by_id[s["id"]] = st
-        markets.append(dict(id=s["id"], name=s["name"], unit=s["unit"], source=s["src"], stats=st))
+        gs, why = indicator_score(s["id"], st, {})
+        markets.append(dict(id=s["id"], name=s["name"], unit=s["unit"], source=s["src"], stats=st,
+                            gold_score=gs, gold_reason=why))
 
     aux = {}
     for sid in AUX_FRED:
@@ -469,14 +622,17 @@ def main():
 
     # ---- 規則式判讀 ----
     s1, t1, src1 = score_rates(fedx)
-    s2, t2, src2 = score_dollar(st_by_id.get("DTWEXBGS"))
+    if st_by_id.get("DX-Y.NYB"):
+        s2, t2, src2 = score_dollar(st_by_id["DX-Y.NYB"])
+    else:
+        s2, t2, src2 = score_dollar(st_by_id.get("DTWEXBGS"), "廣義美元指數")
     s3, t3, src3 = score_real_yield(st_by_id.get("DFII10"), st_by_id.get("T10YIE"))
     s4, t4, src4 = score_risk(st_by_id.get("DCOILWTICO"), st_by_id.get("VIXCLS"), st_by_id.get("BAMLH0A0HYM2"))
     pillars = [
         dict(key="rates", question="降息預期有沒有升溫？", why="為什麼看：市場預期降息越多，持有黃金的機會成本越低。",
              score=s1, title=t1, evidence=src1, links=["DGS2", "DFF"]),
         dict(key="dollar", question="美元有沒有轉弱？", why="為什麼看：黃金用美元計價，美元跌、金價通常撐得住。",
-             score=s2, title=t2, evidence=src2, links=["DTWEXBGS"]),
+             score=s2, title=t2, evidence=src2, links=["DX-Y.NYB", "DTWEXBGS"]),
         dict(key="real", question="實質利率有沒有下降？", why="為什麼看：扣掉通膨後的利率，是黃金最直接的對手。",
              score=s3, title=t3, evidence=src3, links=["DFII10", "T10YIE"]),
         dict(key="risk", question="避險需求有沒有升高？", why="為什麼看：油價、恐慌指數、信用利差反映市場怕不怕。",
@@ -484,6 +640,9 @@ def main():
     ]
     verdict = build_verdict(pillars)
     nxt, upcoming = next_event(now_tpe)
+    categories, pool = build_categories(econ, markets, fedx)
+    fed_item = pool.get("FEDX")
+    dxy = dxy_context(st_by_id.get("DX-Y.NYB"), seed)
 
     out = dict(
         generated_at=now_utc.isoformat(timespec="seconds"),
@@ -494,6 +653,9 @@ def main():
         fed=fedx,
         next_event=nxt,
         upcoming=upcoming,
+        categories=categories,
+        fed_item=fed_item,
+        dxy=dxy,
         econ=econ,
         markets=markets,
         errors=errors,
