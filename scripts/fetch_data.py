@@ -40,11 +40,11 @@ UA = {"User-Agent": "Mozilla/5.0 (compatible; gold-macro-dashboard/1.0)"}
 # ---------------------------------------------------------------------------
 # kind: "level" 直接用數值；"index_mom" 由指數水準換算「季調月增率 %」；"diff" 由水準換算「月增（千人）」
 ECON_SERIES = [
-    dict(id="CPIAUCSL", name="CPI 整體物價", kind="index_mom", unit="季調月增率 · %", dec=2, diff_unit="pp"),
-    dict(id="CPILFESL", name="核心 CPI", kind="index_mom", unit="季調月增率 · %", dec=2, diff_unit="pp"),
-    dict(id="PCEPI", name="PCE 整體物價", kind="index_mom", unit="季調月增率 · %", dec=2, diff_unit="pp"),
-    dict(id="PCEPILFE", name="核心 PCE", kind="index_mom", unit="季調月增率 · %", dec=2, diff_unit="pp"),
-    dict(id="PPIFIS", name="PPI 最終需求", kind="index_mom", unit="季調月增率 · %", dec=2, diff_unit="pp"),
+    dict(id="CPIAUCSL", name="CPI 整體物價", kind="index_mom", unit="年增率 · %", dec=1, diff_unit="pp"),
+    dict(id="CPILFESL", name="核心 CPI", kind="index_mom", unit="年增率 · %", dec=1, diff_unit="pp"),
+    dict(id="PCEPI", name="PCE 整體物價", kind="index_mom", unit="年增率 · %", dec=1, diff_unit="pp"),
+    dict(id="PCEPILFE", name="核心 PCE", kind="index_mom", unit="年增率 · %", dec=1, diff_unit="pp"),
+    dict(id="PPIFIS", name="PPI 最終需求", kind="index_mom", unit="年增率 · %", dec=1, diff_unit="pp"),
     dict(id="PAYEMS", name="非農新增就業", kind="diff", unit="月資料 · 千人", dec=0, diff_unit=""),
     dict(id="UNRATE", name="失業率", kind="level", unit="月資料 · %", dec=1, diff_unit="pp"),
 ]
@@ -227,21 +227,44 @@ def index_to_mom(rows):
     return out
 
 
+def index_to_yoy(rows):
+    """年增率序列（和新聞報導的數字一致）。用月份對照，遇到缺報月份會自動跳過。"""
+    by = {d[:7]: v for d, v in rows}
+    out = []
+    for d, v in rows:
+        prev = f"{int(d[:4]) - 1}-{d[5:7]}"
+        if prev in by:
+            out.append((d, (v / by[prev] - 1) * 100))
+    return out
+
+
 def index_to_diff(rows):
     return [(rows[i][0], rows[i][1] - rows[i - 1][1]) for i in range(1, len(rows))]
 
 
+def _month_back(rows, months):
+    """用月份對照找 N 個月前的值（避免缺報月份造成位移，例如 2025-10 CPI 停擺缺報）。"""
+    by = {d[:7]: v for d, v in rows}
+    d = rows[-1][0]
+    y, m = int(d[:4]), int(d[5:7]) - months
+    while m <= 0:
+        y, m = y - 1, m + 12
+    return by.get(f"{y}-{m:02d}")
+
+
 def annualized_3m(rows):
     """近三個月年化（用指數水準）。"""
-    if len(rows) < 4:
+    if not rows:
         return None
-    return ((rows[-1][1] / rows[-4][1]) ** 4 - 1) * 100
+    base = _month_back(rows, 3)
+    return ((rows[-1][1] / base) ** 4 - 1) * 100 if base else None
 
 
 def yoy(rows):
-    if len(rows) < 13:
+    if not rows:
         return None
-    return (rows[-1][1] / rows[-13][1] - 1) * 100
+    base = _month_back(rows, 12)
+    return (rows[-1][1] / base - 1) * 100 if base else None
 
 
 # ---------------------------------------------------------------------------
@@ -758,7 +781,7 @@ def main():
             rows = []
         raw_month[s["id"]] = rows
         if s["kind"] == "index_mom":
-            conv = index_to_mom(rows)
+            conv = index_to_yoy(rows)   # 主數字＝年增率（新聞常用），月增率另外顯示
         elif s["kind"] == "diff":
             conv = index_to_diff(rows)
         else:
@@ -766,7 +789,9 @@ def main():
         st = series_stats(conv, s["dec"], s["diff_unit"])
         extra = {}
         if s["kind"] == "index_mom" and rows:
-            extra = dict(ann3m=r(annualized_3m(rows), 2), yoy=r(yoy(rows), 2))
+            mom = index_to_mom(rows)
+            extra = dict(ann3m=r(annualized_3m(rows), 2), yoy=r(yoy(rows), 2),
+                         mom=r(mom[-1][1], 2) if mom else None)
         econ.append(dict(id=s["id"], name=s["name"], unit=s["unit"], period=(rows[-1][0][:7] if rows else None),
                          stats=st, **extra))
 
