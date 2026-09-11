@@ -21,6 +21,7 @@ import csv
 import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.parse
@@ -71,7 +72,12 @@ FUT_MONTH_CODE = {1: "F", 2: "G", 3: "H", 4: "J", 5: "K", 6: "M", 7: "N", 8: "Q"
 # ---------------------------------------------------------------------------
 # 抓資料
 # ---------------------------------------------------------------------------
-def http_get(url: str, retries: int = 2, timeout: int = 12) -> str:
+def safe_url(url: str) -> str:
+    """錯誤訊息只留網址主體，絕不把 API key 等查詢參數寫進公開的 data.json。"""
+    return url.split("?")[0]
+
+
+def http_get(url: str, retries: int = 3, timeout: int = 15) -> str:
     """短逾時、少重試：任何來源卡住最多拖 ~30 秒，不會讓整個工作掛死。"""
     last = None
     t0 = time.time()
@@ -86,7 +92,7 @@ def http_get(url: str, retries: int = 2, timeout: int = 12) -> str:
             last = e
             print(f"[get] {url.split('?')[0]} fail#{i+1}: {e}", flush=True)
             time.sleep(1)
-    raise RuntimeError(f"GET failed {url}: {last}")
+    raise RuntimeError(f"{safe_url(url)} 連線失敗（{type(last).__name__}）")
 
 
 def parse_csv(text: str) -> list[tuple[str, float]]:
@@ -769,6 +775,26 @@ def main():
     start_month = (today - timedelta(days=3 * 365)).isoformat()
 
     errors = []
+    # 上一次成功的資料：某個來源暫時連不上時，沿用上次數字，不讓卡片變空白
+    prev = {}
+    try:
+        _old = json.loads((DATA_DIR / "data.json").read_text(encoding="utf-8"))
+        for it in (_old.get("econ") or []) + (_old.get("markets") or []):
+            if it.get("stats"):
+                prev[it["id"]] = it
+        prev["_gold_moves"] = _old.get("gold_moves")
+        prev["_gold_tech"] = _old.get("gold_tech")
+        prev["_cot"] = _old.get("cot")
+    except Exception:  # noqa: BLE001
+        pass
+
+    def fail(sid, name, e):
+        old = prev.get(sid)
+        when = (old.get("period") or (old.get("stats") or {}).get("latest_date")) if old else None
+        msg = f"{name}：來源暫時連不上，" + (f"沿用上次資料（{when}）" if old else "本次無資料")
+        errors.append(msg)
+        print(f"[warn] {sid}: {e}", flush=True)
+        return old
 
     # ---- 經濟數據 ----
     econ = []
@@ -776,8 +802,13 @@ def main():
     for s in ECON_SERIES:
         try:
             rows = fetch_fred(s["id"], start_month, seed)
+            if not rows:
+                raise RuntimeError("回傳空資料")
         except Exception as e:  # noqa: BLE001
-            errors.append(f"{s['id']}: {e}")
+            old = fail(s["id"], s["name"], e)
+            if old:
+                econ.append(dict(old, stale=True))
+                continue
             rows = []
         raw_month[s["id"]] = rows
         if s["kind"] == "index_mom":
@@ -803,8 +834,16 @@ def main():
     for s in MARKET_SERIES:
         try:
             rows = fetch_yahoo(s["id"], s.get("rng", "6mo"), seed) if s["src"] == "yahoo" else fetch_fred(s["id"], start_daily, seed)
+            if not rows:
+                raise RuntimeError("回傳空資料")
         except Exception as e:  # noqa: BLE001
-            errors.append(f"{s['id']}: {e}")
+            old = fail(s["id"], s["name"], e)
+            if old:
+                st_by_id[s["id"]] = old["stats"]
+                markets.append(dict(old, stale=True))
+                if s["id"] == "GC=F":
+                    gold_moves, gold_tech = prev.get("_gold_moves"), prev.get("_gold_tech")
+                continue
             rows = []
         st = series_stats(rows, s["dec"], s["diff_unit"], s.get("pct", False))
         if st and len(rows) >= 200:
@@ -821,7 +860,7 @@ def main():
             rows = fetch_fred(sid, start_daily, seed)
             aux[sid] = rows[-1][1] if rows else None
         except Exception as e:  # noqa: BLE001
-            errors.append(f"{sid}: {e}")
+            errors.append(f"聯準會利率區間（{sid}）：來源暫時連不上")
             aux[sid] = None
     mid = None
     if aux.get("DFEDTARU") is not None and aux.get("DFEDTARL") is not None:
@@ -864,8 +903,9 @@ def main():
     try:
         cot = fetch_cot(seed)
     except Exception as e:  # noqa: BLE001
-        errors.append(f"CFTC COT: {e}")
-        cot = None
+        errors.append("CFTC 籌碼：來源暫時連不上，沿用上次資料")
+        print(f"[warn] COT: {e}", flush=True)
+        cot = prev.get("_cot")
     sp = DATA_DIR / "structural.json"
     structural = json.loads(sp.read_text(encoding="utf-8")) if sp.exists() else None
     fed_item = pool.get("FEDX")
@@ -892,6 +932,7 @@ def main():
         errors=errors,
         count=len(econ) + len(markets),
     )
+    out["errors"] = [re.sub(r"(api_key|token|key)=[^&\s]+", r"\1=***", x) for x in errors]
     DATA_DIR.mkdir(exist_ok=True)
     (DATA_DIR / "data.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[ok] wrote data/data.json  mode={out['mode']}  verdict={verdict['stance']} ({verdict['score']})")
