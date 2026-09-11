@@ -120,6 +120,14 @@ button{font-family:inherit}
 .cond .h{font-weight:900;font-size:14px;margin-bottom:2px}
 .cond.bull .h{color:var(--bull)} .cond.bear .h{color:var(--bear)}
 .cond p{margin:0;font-size:14px;color:var(--ink)}
+/* alert & live strip */
+.alertbar{margin:14px 0 0;border:1px solid rgba(239,107,115,.7);background:linear-gradient(90deg,rgba(239,107,115,.28),rgba(239,107,115,.1));border-radius:14px;padding:12px 16px;color:var(--ink);display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.alertbar .ic{font-size:20px;line-height:1.3}
+.alertbar b{color:var(--bear)}
+.alertbar .tg{display:inline-block;background:rgba(0,0,0,.25);border-radius:999px;padding:2px 10px;margin:4px 6px 0 0;font-family:var(--mono);font-size:12.5px}
+.live{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 14px 4px}
+.live-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:baseline}
+#tv-tickers{min-height:72px}
 /* tech strip & layers */
 .tech{margin-top:14px;border:1px solid var(--line2);border-radius:14px;padding:12px 14px;background:rgba(0,0,0,.12)}
 .tech .tt{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
@@ -202,6 +210,11 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
   <div class="nav"><a href="#s1">今日結論</a><a href="#s2">加減分儀表板</a><a href="#s3">資金面</a><a href="#s3b">關鍵圖</a><a href="#s4">30 天內數據</a><button onclick="openModal('src')">資料來源</button><button onclick="openModal('rules')">判讀規則</button></div>
 </div>
 <div id="err" class="errbox" style="display:none"></div>
+<div id="alert" class="alertbar" hidden></div>
+<div class="live">
+  <div class="live-h"><span class="eyebrow">LIVE · 即時行情</span><span class="fine">突發消息時先看這裡：市場當下怎麼反應</span></div>
+  <div id="tv-tickers"></div>
+</div>
 
 <!-- HERO -->
 <div class="hero" id="s1">
@@ -264,6 +277,23 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
   const s=document.createElement("script"); s.async=true;
   s.src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
   s.innerHTML=JSON.stringify({symbol:"PEPPERSTONE:XAUUSD",width:"100%",height:210,locale:"zh_TW",dateRange:"1M",colorTheme:"dark",isTransparent:true,autosize:false,largeChartUrl:"",trendLineColor:"#e0b04f",underLineColor:"rgba(224,176,79,0.2)",underLineBottomColor:"rgba(224,176,79,0)"});
+  w.appendChild(s); box.appendChild(w);
+})();
+</script>
+
+<script>
+(function(){
+  const box=document.getElementById("tv-tickers");
+  const w=document.createElement("div"); w.className="tradingview-widget-container"; w.innerHTML='<div class="tradingview-widget-container__widget"></div>';
+  const s=document.createElement("script"); s.async=true;
+  s.src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js";
+  s.innerHTML=JSON.stringify({symbols:[
+    {proName:"TVC:DXY",title:"美元指數 DXY"},
+    {proName:"TVC:US10Y",title:"美債 10 年殖利率"},
+    {proName:"TVC:US02Y",title:"美債 2 年殖利率"},
+    {proName:"TVC:USOIL",title:"WTI 原油"},
+    {proName:"TVC:VIX",title:"VIX 恐慌指數"}],
+    colorTheme:"dark",isTransparent:true,showSymbolLogo:false,locale:"zh_TW"});
   w.appendChild(s); box.appendChild(w);
 })();
 </script>
@@ -529,6 +559,7 @@ function openModal(k){
    非農：近 3 個月平均 &lt;100 千人 +1、&lt;50 +2，&gt;175 −1、&gt;250 −2。失業率：比近 12 個月低點高 0.3 +1、0.5 +2。<br>
    VIX：≥20 +1、≥25 +2、≤13 −1。信用利差：20 日擴大 20 bp +1、50 bp +2。WTI：押升息時油價漲 5% −1、10% −2（通膨壓力）；押降息時反過來算偏多（避險）；方向不明時只有漲 10% 以上且 VIX ≥ 20 才算避險偏多。</p>
    <h5>三層訊號（互相獨立，不混在一起）</h5><p>① 總經方向＝上面的加減分總分。② 資金擁擠度＝CFTC 管理基金黃金期貨淨多單在過去 3 年的百分位：≥90% 多方極度擁擠（容易多殺多）、75–90% 偏擁擠、25–75% 中性、10–25% 多單偏少、≤10% 空方極度擁擠（容易軋空）。③ 技術位置＝COMEX 黃金收盤價相對 50／200 日均線：兩條都在上方＝多頭結構、都在下方＝空頭結構、夾在中間＝反彈或回檔。三者同向時訊號最強；互相矛盾時代表方向還不明確。</p>
+   <h5>劇烈波動警示</h5><p>每 30 分鐘檢查 Yahoo 即時報價與前一日收盤比較：黃金 ±1.5%、VIX 上升 20% 或高於 30、DXY ±1%、WTI 原油 ±5%，任一成立就在頁面頂端顯示警示，恢復後自動消失。它只提醒「市場正在劇烈反應」，不改變總經分數。</p>
    <h5>不計分的參考指標</h5><p>整體 CPI、整體 PCE（與核心重複）、廣義美元指數（與 DXY 重複）、布蘭特原油（與 WTI 重複）、10 年期殖利率（與 2 年期、實質殖利率重疊）。</p>
    <h5>美元指數強弱區間</h5><p>沒有官方標準。本站用市場慣用的 1973 年基期 100 為中線：&lt;90 弱勢、90–95 偏弱、95–100 中性、100–105 偏強、&gt;105 強勢；另外附上「過去 10 年百分位」與「200 日均線」兩個較客觀的參考。</p>
    <p class="fine" style="margin-top:12px">門檻寫在 scripts/fetch_data.py，可自行調整。</p>`;
@@ -536,6 +567,12 @@ function openModal(k){
 }
 function closeModal(){document.getElementById("modal").classList.remove("on")}
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+fetch("data/alert.json?t="+Date.now()).then(r=>r.ok?r.json():null).then(a=>{
+  if(!a||a.status!=="alert") return;
+  const el=document.getElementById("alert");
+  el.innerHTML=`<div class="ic">⚠</div><div style="flex:1;min-width:240px"><b>劇烈波動警示</b>（${a.since} 起）：${a.note}<div>${a.triggers.map(t=>`<span class="tg">${t.name} ${t.chg_pct>0?"+":""}${t.chg_pct}%</span>`).join("")}</div><div class="fine" style="margin-top:4px">每 30 分鐘檢查一次：黃金單日 ±1.5%、VIX 單日 +20% 或 ≥30、DXY ±1%、原油 ±5% 任一成立就會出現；恢復平靜後自動消失</div></div>`;
+  el.hidden=false;
+}).catch(()=>{});
 fetch("data/data.json?t="+Date.now()).then(r=>r.json()).then(render).catch(err=>{
   const e=document.getElementById("err");e.style.display="block";e.textContent="讀不到 data/data.json："+err;
 });
