@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-黃金觀測室 — 資料抓取與規則式判讀
+黃金觀測站 — 資料抓取與規則式判讀
 =================================
 用法：
     python scripts/fetch_data.py            # 線上抓取（FRED CSV ＋ Yahoo Finance），輸出 data/data.json
@@ -360,18 +360,33 @@ def score_risk(st_wti, st_vix, st_hy):
 
 
 def build_verdict(pillars):
+    """外匯多空雙向：只描述總經環境偏多或偏空，分數互相抵消時視為盤整。"""
     total = sum(p["score"] for p in pillars)
-    if total >= 2:
-        return dict(score=total, stance="bull", label="利多到齊，偏向支持金價",
-                    headline="利多條件到齊，偏向支持金價",
-                    detail="降息預期、美元、實質利率、避險需求之中，多數已轉向對黃金有利。")
-    if total <= -2:
-        return dict(score=total, stance="bear", label="逆風增加，先留意壓力",
-                    headline="逆風條件增加，先留意下跌壓力",
-                    detail="多數條件目前對黃金不利，反彈時請保守看待。")
-    return dict(score=total, stance="neutral", label="利多還沒到齊，先保守看待",
-                headline="尚未形成一致利多，先保守看待",
-                detail="四個條件方向不一致，黃金缺乏共同推力。")
+    bulls = [p["title"] for p in pillars if p["score"] > 0]
+    bears = [p["title"] for p in pillars if p["score"] < 0]
+    if total >= 3:
+        return dict(score=total, stance="bull", label="總經強烈偏多", headline="四個推力大多同向，對黃金偏多",
+                    detail="多數推力同時站在黃金上漲這一邊，趨勢較明確。")
+    if total == 2:
+        return dict(score=total, stance="bull", label="總經偏多", headline="偏多的推力占上風",
+                    detail="偏多推力明顯多於偏空推力，環境偏向支撐金價。")
+    if total <= -3:
+        return dict(score=total, stance="bear", label="總經強烈偏空", headline="四個推力大多同向，對黃金偏空",
+                    detail="多數推力同時站在黃金下跌這一邊，趨勢較明確。")
+    if total == -2:
+        return dict(score=total, stance="bear", label="總經偏空", headline="偏空的推力占上風",
+                    detail="偏空推力明顯多於偏多推力，環境對金價形成壓力。")
+    if total == 1:
+        return dict(score=total, stance="neutral", label="略偏多，但訊號不足", headline="稍微偏多，還不到明確方向",
+                    detail="偏多推力只多一票，容易被下一個數據翻轉，仍以區間震盪看待。")
+    if total == -1:
+        return dict(score=total, stance="neutral", label="略偏空，但訊號不足", headline="稍微偏空，還不到明確方向",
+                    detail="偏空推力只多一票，容易被下一個數據翻轉，仍以區間震盪看待。")
+    if bulls and bears:
+        return dict(score=0, stance="neutral", label="多空拉鋸，偏向盤整", headline="多空推力互相抵消",
+                    detail=f"偏多（{'、'.join(bulls)}）與偏空（{'、'.join(bears)}）力道相當，缺乏單一方向，偏向區間盤整。")
+    return dict(score=0, stance="neutral", label="缺乏推力，偏向盤整", headline="四個推力都沒有明顯方向",
+                detail="總經面沒有給出方向，金價較可能在區間內整理，等待下一個數據。")
 
 
 # ---------------------------------------------------------------------------
@@ -433,89 +448,182 @@ def _pct20(st):
     return st["raw_chg20"] / st["spark"][-21] * 100
 
 
-def indicator_score(sid, st, extra):
-    """回傳 (分數, 一句話理由)。正數＝對黃金有利。"""
+# 參考指標：顯示但不計分（避免同一件事重複計算）
+REFERENCE_ONLY = {"CPIAUCSL": "整體 CPI 與核心 CPI 是同一件事，只用核心計分",
+                  "PCEPI": "整體 PCE 與核心 PCE 是同一件事，只用核心計分",
+                  "DTWEXBGS": "與 DXY 同方向，只用 DXY 計分",
+                  "DCOILBRENTEU": "與 WTI 幾乎同步，只用 WTI 計分",
+                  "DGS10": "與 2 年期、實質殖利率重疊，只作參考",
+                  "GC=F": "觀察對象本身"}
+
+
+def _blend(extra):
+    a3, yy = extra.get("ann3m"), extra.get("yoy")
+    if a3 is None and yy is None:
+        return None
+    if a3 is None:
+        return yy
+    if yy is None:
+        return a3
+    return (a3 + yy) / 2  # 近 3 個月年化與年增率平均，避免單月數字失真
+
+
+def indicator_score(sid, st, extra, ctx):
+    """回傳 (分數 −2…+2, 一句話理由)。正數＝讓黃金偏多，負數＝偏空。
+    核心邏輯：聯準會看通膨與就業 → 決定利率 → 利率與美元決定黃金。"""
+    if sid in REFERENCE_ONLY:
+        return None, REFERENCE_ONLY[sid]
     if not st:
         return 0, "資料不足"
-    if sid in ("CPIAUCSL", "CPILFESL", "PCEPI", "PCEPILFE", "PPIFIS"):
-        a3, yy = extra.get("ann3m"), extra.get("yoy")
-        if a3 is None or yy is None:
+    regime = ctx["regime"]  # hike / cut / neutral：期貨市場目前押的方向
+    if sid in ("CPILFESL", "PCEPILFE"):
+        b = _blend(extra)
+        if b is None:
             return 0, "資料不足"
-        gap = a3 - yy  # 近 3 個月比過去一年低 → 通膨降溫 → 降息空間變大
-        sc = -_band(gap, (-1.5, -0.5, 0.5, 1.5))
-        word = "降溫" if gap < -0.5 else "升溫" if gap > 0.5 else "持平"
-        return sc, f"近 3 個月年化 {a3:.1f}% vs 年增 {yy:.1f}%，通膨{word}"
+        adj = 0.4 if sid == "CPILFESL" else 0.0  # CPI 長期比 PCE 高約 0.3–0.5 個百分點
+        x = b - adj
+        sc = 2 if x < 1.5 else 1 if x < 2.0 else 0 if x <= 2.5 else -1 if x <= 3.0 else -2
+        word = "已低於" if x < 2.0 else "接近" if x <= 2.5 else "明顯高於"
+        note = f"（CPI 通常比 PCE 高約 0.4，換算約 {x:.1f}%）" if adj else ""
+        return sc, f"近 3 個月年化與年增平均 {b:.1f}%{note}，{word}聯準會 2% 目標；越高越逼升息"
+    if sid == "PPIFIS":
+        b = _blend(extra)
+        if b is None:
+            return 0, "資料不足"
+        sc = 2 if b < 0.5 else 1 if b < 1.5 else 0 if b <= 2.5 else -1 if b <= 3.5 else -2
+        return sc, f"上游物價年化約 {b:.1f}%（越高越可能傳到 CPI）"
+    if sid == "T10YIE":
+        bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
+        if bp is None:
+            return 0, "資料不足"
+        if regime == "hike":
+            return -_band(bp, (-20, -8, 8, 20)), f"通膨預期 20 日 {bp:+.0f} bp；市場押升息時，通膨預期上升會加強升息壓力"
+        if regime == "cut":
+            return _band(bp, (-20, -8, 8, 20)), f"通膨預期 20 日 {bp:+.0f} bp；市場押降息時，通膨預期上升會壓低實質利率"
+        return 0, f"通膨預期 20 日 {bp:+.0f} bp；利率方向不明，暫不計分"
     if sid == "PAYEMS":
         sp = [v for v in st["spark"] if v is not None][-3:]
         avg = sum(sp) / len(sp)
-        sc = -_band(avg, (50, 100, 175, 250))  # 就業越弱越支持黃金
-        return sc, f"近 3 個月平均新增 {avg:.0f} 千人"
+        sc = -_band(avg, (50, 100, 175, 250))  # 就業越弱越逼降息 → 偏多
+        return sc, f"近 3 個月平均新增 {avg:.0f} 千人（100 以下偏弱、175 以上偏強）"
     if sid == "UNRATE":
         sp = [v for v in st["spark"] if v is not None][-12:]
         rise = st["latest"] - min(sp)
         sc = 2 if rise >= 0.5 else 1 if rise >= 0.3 else (-1 if st["latest"] < sp[0] - 0.2 else 0)
-        return sc, f"比近 12 個月低點高 {rise:.1f} 個百分點"
-    if sid in ("DGS2", "DGS10"):
+        return sc, f"比近 12 個月低點高 {rise:.1f} 個百分點（升 0.5 以上是衰退警訊）"
+    if sid == "DGS2":
         bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
-        return -_band(bp, (-20, -8, 8, 20)), (f"20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
+        return -_band(bp, (-20, -8, 8, 20)), (f"20 日 {bp:+.0f} bp（上升＝市場加碼押升息）" if bp is not None else "資料不足")
     if sid == "DFII10":
         bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
-        return -_band(bp, (-25, -10, 10, 25)), (f"20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
-    if sid == "T10YIE":
-        bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
-        return _band(bp, (-20, -8, 8, 20)), (f"通膨預期 20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
-    if sid in ("DX-Y.NYB", "DTWEXBGS"):
+        return -_band(bp, (-25, -10, 10, 25)), (f"20 日 {bp:+.0f} bp（黃金最直接的對手）" if bp is not None else "資料不足")
+    if sid == "DX-Y.NYB":
         pc = _pct20(st)
         return -_band(pc, (-1.5, -0.5, 0.5, 1.5)), (f"20 日 {pc:+.2f}%" if pc is not None else "資料不足")
-    if sid in ("DCOILWTICO", "DCOILBRENTEU"):
+    if sid == "DCOILWTICO":
         pc = _pct20(st)
         if pc is None and len(st["spark"]) >= 2:
             pc = (st["spark"][-1] / st["spark"][0] - 1) * 100
-        return _band(pc, (-10, -5, 5, 10)), (f"約 1 個月 {pc:+.1f}%，通膨與地緣風險溫度" if pc is not None else "資料不足")
+        if pc is None:
+            return 0, "資料不足"
+        if regime == "hike":
+            return -_band(pc, (-10, -5, 5, 10)), f"約 1 個月 {pc:+.1f}%；市場押升息時，油價上漲推升通膨、加強升息壓力"
+        if regime == "cut":
+            return _band(pc, (-10, -5, 5, 10)), f"約 1 個月 {pc:+.1f}%；市場押降息時，油價上漲以通膨避險、地緣風險為主"
+        if pc >= 10 and ctx.get("vix", 0) >= 20:
+            return 1, f"約 1 個月 {pc:+.1f}% 且 VIX 偏高，偏向地緣避險"
+        return (-1 if pc >= 10 else 1 if pc <= -10 else 0), f"約 1 個月 {pc:+.1f}%；利率方向不明，大漲視為通膨壓力"
     if sid == "VIXCLS":
         v = st["latest"]
         sc = 2 if v >= 25 else 1 if v >= 20 else -1 if v <= 13 else 0
-        return sc, f"VIX {v:.1f}（20 以上算緊張）"
+        return sc, f"VIX {v:.1f}（20 以上開始緊張，資金找避險）"
     if sid == "BAMLH0A0HYM2":
         bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
-        return _band(bp, (-50, -20, 20, 50)), (f"20 日 {bp:+.0f} bp" if bp is not None else "資料不足")
+        return _band(bp, (-50, -20, 20, 50)), (f"20 日 {bp:+.0f} bp（擴大＝市場怕違約）" if bp is not None else "資料不足")
     return 0, ""
 
 
 CATEGORIES = [
-    dict(key="rates", name="利率與降息預期", icon="%", desc="利率越低、越押降息，抱黃金的機會成本越低",
+    dict(key="rates", name="利率與降息預期", icon="%", weight=2,
+         desc="主軸：通膨、就業、油價最後都透過利率影響黃金。押降息偏多，押升息偏空",
          ids=["FEDX", "DFII10", "DGS2", "DGS10"]),
-    dict(key="dollar", name="美元", icon="$", desc="黃金用美元計價，美元越弱金價越容易撐住",
+    dict(key="dollar", name="美元", icon="$", weight=1, desc="黃金用美元計價，美元轉弱偏多，走強偏空",
          ids=["DX-Y.NYB", "DTWEXBGS"]),
-    dict(key="inflation", name="通膨", icon="↗", desc="通膨降溫＝聯準會有空間降息；通膨預期升溫＝抗通膨需求",
-         ids=["CPILFESL", "CPIAUCSL", "PCEPILFE", "PCEPI", "PPIFIS", "T10YIE"]),
-    dict(key="jobs", name="就業", icon="◎", desc="就業轉弱會逼聯準會降息，是黃金的間接利多",
+    dict(key="inflation", name="通膨", icon="↗", weight=1,
+         desc="通膨越高於 2% 目標，聯準會越可能升息 → 偏空；回到目標附近才有降息空間 → 偏多",
+         ids=["PCEPILFE", "CPILFESL", "PPIFIS", "T10YIE", "PCEPI", "CPIAUCSL"]),
+    dict(key="jobs", name="就業", icon="◎", weight=1, desc="就業轉弱會逼聯準會降息 → 偏多；就業強勁讓升息沒有顧慮 → 偏空",
          ids=["PAYEMS", "UNRATE"]),
-    dict(key="risk", name="避險與能源", icon="⚑", desc="油價、恐慌指數、信用利差反映市場怕不怕",
-         ids=["DCOILWTICO", "DCOILBRENTEU", "VIXCLS", "BAMLH0A0HYM2"]),
+    dict(key="risk", name="避險與能源", icon="⚑", weight=1,
+         desc="恐慌與信用壓力升高 → 避險買盤偏多；油價要看利率環境，押升息時油價漲算偏空",
+         ids=["VIXCLS", "BAMLH0A0HYM2", "DCOILWTICO", "DCOILBRENTEU"]),
 ]
 
 
-def build_categories(econ, markets, fedx):
-    pool = {e["id"]: e for e in econ + markets}
-    # 把降息預期也做成一張「指標卡」
+def build_categories(pool, fedx):
     h = fedx["horizons"][0] if fedx.get("horizons") else None
     if h:
         bp = h["vs_now_bp"]
         pool["FEDX"] = dict(id="FEDX", name="降息預期（期貨隱含年底利率）", unit="%", kind="fed",
-                            stats=dict(latest=h["implied"], latest_date=h["date"], chg=f"{bp:+.0f} bp vs 現在",
-                                       spark=None),
+                            stats=dict(latest=h["implied"], latest_date=h["date"], chg=f"{bp:+.0f} bp vs 現在", spark=None),
                             gold_score=-_band(bp, (-50, -25, 25, 50)),
-                            gold_reason=f"比目前利率中點 {fedx['target_mid']:.3f}% 高 {bp:+.0f} bp（約 {abs(round(bp/25))} 碼{'升息' if bp > 0 else '降息'}）"
-                            if bp else "與目前利率相同")
+                            gold_reason=(f"比目前利率中點 {fedx['target_mid']:.3f}% {'高' if bp > 0 else '低'} {abs(bp):.0f} bp"
+                                         f"（市場押約 {abs(round(bp/25))} 碼{'升息' if bp > 0 else '降息'}）") if bp else "與目前利率相同")
     out = []
     for c in CATEGORIES:
         items = [pool[i] for i in c["ids"] if i in pool and pool[i].get("stats")]
-        total = sum(it.get("gold_score", 0) for it in items)
-        mx = 2 * len(items) or 1
-        out.append(dict(key=c["key"], name=c["name"], icon=c["icon"], desc=c["desc"], ids=[it["id"] for it in items],
-                        score=total, max=mx))
-    return out, pool
+        scored = [it["gold_score"] for it in items if it.get("gold_score") is not None]
+        avg = round(sum(scored) / len(scored), 1) if scored else 0.0
+        out.append(dict(key=c["key"], name=c["name"], icon=c["icon"], desc=c["desc"], weight=c["weight"],
+                        ids=[it["id"] for it in items], score=avg, max=2, n_scored=len(scored),
+                        weighted=round(avg * c["weight"], 1)))
+    return out
+
+
+def build_verdict_total(categories):
+    total = round(sum(c["weighted"] for c in categories), 1)
+    mx = 2 * sum(c["weight"] for c in categories)
+    pos = [c["name"] for c in categories if c["score"] >= 0.5]
+    neg = [c["name"] for c in categories if c["score"] <= -0.5]
+    if total >= 6:
+        st, lb, dt = "bull", "總經強烈偏多", "多數類別同時讓黃金偏多，方向明確"
+    elif total >= 3:
+        st, lb, dt = "bull", "總經偏多", "偏多的類別占上風"
+    elif total > 1:
+        st, lb, dt = "neutral", "略偏多，訊號不足", "偏多稍占上風，但容易被下一個數據翻轉"
+    elif total <= -6:
+        st, lb, dt = "bear", "總經強烈偏空", "多數類別同時讓黃金偏空，方向明確"
+    elif total <= -3:
+        st, lb, dt = "bear", "總經偏空", "偏空的類別占上風"
+    elif total < -1:
+        st, lb, dt = "neutral", "略偏空，訊號不足", "偏空稍占上風，但容易被下一個數據翻轉"
+    else:
+        st, lb, dt = "neutral", "多空拉鋸，偏向盤整", "多空力道相當，缺乏單一方向"
+    parts = []
+    if pos:
+        parts.append("偏多：" + "、".join(pos))
+    if neg:
+        parts.append("偏空：" + "、".join(neg))
+    return dict(score=total, max=mx, stance=st, label=lb, headline=lb,
+                detail=dt + ("（" + "；".join(parts) + "）" if parts else "。"))
+
+
+def calendar_moves(rows):
+    """與前一日、7 日前、30 日前（日曆天，取當天或之前最近一筆）比較。"""
+    if not rows:
+        return None
+    last_d = date.fromisoformat(rows[-1][0]); last_v = rows[-1][1]
+    def back(days):
+        target = last_d - timedelta(days=days)
+        cand = [v for d, v in rows if date.fromisoformat(d) <= target]
+        return cand[-1] if cand else None
+    out = {}
+    prev = rows[-2][1] if len(rows) > 1 else None
+    for k, base in (("d1", prev), ("d7", back(7)), ("d30", back(30))):
+        if base:
+            out[k] = dict(abs=r(last_v - base, 1), pct=r((last_v / base - 1) * 100, 2))
+    out["date"] = rows[-1][0]; out["close"] = r(last_v, 1)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -584,13 +692,13 @@ def main():
         extra = {}
         if s["kind"] == "index_mom" and rows:
             extra = dict(ann3m=r(annualized_3m(rows), 2), yoy=r(yoy(rows), 2))
-        gs, why = indicator_score(s["id"], st, extra)
         econ.append(dict(id=s["id"], name=s["name"], unit=s["unit"], period=(rows[-1][0][:7] if rows else None),
-                         stats=st, gold_score=gs, gold_reason=why, **extra))
+                         stats=st, **extra))
 
     # ---- 金融市場 ----
     markets = []
     st_by_id = {}
+    gold_moves = None
     for s in MARKET_SERIES:
         try:
             rows = fetch_yahoo(s["id"], s.get("rng", "6mo"), seed) if s["src"] == "yahoo" else fetch_fred(s["id"], start_daily, seed)
@@ -601,9 +709,9 @@ def main():
         if st and len(rows) >= 200:
             st["ma200"] = r(sum(v for _, v in rows[-200:]) / 200, 2)
         st_by_id[s["id"]] = st
-        gs, why = indicator_score(s["id"], st, {})
-        markets.append(dict(id=s["id"], name=s["name"], unit=s["unit"], source=s["src"], stats=st,
-                            gold_score=gs, gold_reason=why))
+        if s["id"] == "GC=F":
+            gold_moves = calendar_moves(rows)
+        markets.append(dict(id=s["id"], name=s["name"], unit=s["unit"], source=s["src"], stats=st))
 
     aux = {}
     for sid in AUX_FRED:
@@ -638,9 +746,19 @@ def main():
         dict(key="risk", question="避險需求有沒有升高？", why="為什麼看：油價、恐慌指數、信用利差反映市場怕不怕。",
              score=s4, title=t4, evidence=src4, links=["DCOILWTICO", "VIXCLS", "BAMLH0A0HYM2"]),
     ]
-    verdict = build_verdict(pillars)
+    # ---- 每個指標加減分（依利率環境判斷傳導方向）----
+    h0 = fedx["horizons"][0] if fedx.get("horizons") else None
+    bp0 = h0["vs_now_bp"] if h0 else fedx.get("proxy_2y_minus_ff_bp")
+    regime = "hike" if bp0 is not None and bp0 >= 25 else "cut" if bp0 is not None and bp0 <= -25 else "neutral"
+    ctx = dict(regime=regime, vix=(st_by_id.get("VIXCLS") or {}).get("latest") or 0)
+    for it in econ + markets:
+        ex = {k: it.get(k) for k in ("ann3m", "yoy")}
+        it["gold_score"], it["gold_reason"] = indicator_score(it["id"], it.get("stats"), ex, ctx)
+    pool = {e["id"]: e for e in econ + markets}
+    categories = build_categories(pool, fedx)
+    verdict = build_verdict_total(categories)
+    verdict["regime"] = regime
     nxt, upcoming = next_event(now_tpe)
-    categories, pool = build_categories(econ, markets, fedx)
     fed_item = pool.get("FEDX")
     dxy = dxy_context(st_by_id.get("DX-Y.NYB"), seed)
 
@@ -655,6 +773,7 @@ def main():
         upcoming=upcoming,
         categories=categories,
         fed_item=fed_item,
+        gold_moves=gold_moves,
         dxy=dxy,
         econ=econ,
         markets=markets,
