@@ -1,13 +1,15 @@
 {
- "generated_at": "2026-09-11T02:34:40+00:00",
- "generated_at_tpe": "09/11 10:34",
+ "generated_at": "2026-09-11T03:17:51+00:00",
+ "generated_at_tpe": "09/11 11:17",
  "mode": "live",
  "verdict": {
-  "score": 0,
+  "score": -2.0,
+  "max": 12,
   "stance": "neutral",
-  "label": "利多還沒到齊，先保守看待",
-  "headline": "尚未形成一致利多，先保守看待",
-  "detail": "四個條件方向不一致，黃金缺乏共同推力。"
+  "label": "略偏空，訊號不足",
+  "headline": "略偏空，訊號不足",
+  "detail": "偏空稍占上風，但容易被下一個數據翻轉（偏多：美元、就業；偏空：利率與降息預期、通膨、避險與能源）",
+  "regime": "hike"
  },
  "pillars": [
   {
@@ -16,7 +18,7 @@
    "why": "為什麼看：市場預期降息越多，持有黃金的機會成本越低。",
    "score": -1,
    "title": "市場在押升息",
-   "evidence": "聯邦基金期貨隱含年底利率 4.02%，較目前中點 3.625% 差 +39 bp",
+   "evidence": "聯邦基金期貨隱含年底利率 4.03%，較目前中點 3.625% 差 +40 bp",
    "links": [
     "DGS2",
     "DFF"
@@ -28,7 +30,7 @@
    "why": "為什麼看：黃金用美元計價，美元跌、金價通常撐得住。",
    "score": 1,
    "title": "美元轉弱",
-   "evidence": "美元指數 DXY 99.11，20 個交易日變化 -0.85 點（-0.85%）",
+   "evidence": "美元指數 DXY 99.14，20 個交易日變化 -0.82 點（-0.83%）",
    "links": [
     "DX-Y.NYB",
     "DTWEXBGS"
@@ -68,17 +70,17 @@
     "label": "年底",
     "symbol": "ZQZ26.CBT",
     "date": "2026-09-11",
-    "price": 95.98,
-    "implied": 4.02,
-    "vs_now_bp": 39.0
+    "price": 95.975,
+    "implied": 4.03,
+    "vs_now_bp": 40.0
    },
    {
     "label": "明年年中",
     "symbol": "ZQM27.CBT",
     "date": "2026-09-11",
-    "price": 95.575,
-    "implied": 4.43,
-    "vs_now_bp": 80.0
+    "price": 95.56,
+    "implied": 4.44,
+    "vs_now_bp": 82.0
    }
   ],
   "proxy_2y_minus_ff_bp": 80.0,
@@ -151,69 +153,84 @@
    "key": "rates",
    "name": "利率與降息預期",
    "icon": "%",
-   "desc": "利率越低、越押降息，抱黃金的機會成本越低",
+   "desc": "主軸：通膨、就業、油價最後都透過利率影響黃金。押降息偏多，押升息偏空",
+   "weight": 2,
    "ids": [
     "FEDX",
     "DFII10",
     "DGS2",
     "DGS10"
    ],
-   "score": -4,
-   "max": 8
+   "score": -1.0,
+   "max": 2,
+   "n_scored": 3,
+   "weighted": -2.0
   },
   {
    "key": "dollar",
    "name": "美元",
    "icon": "$",
-   "desc": "黃金用美元計價，美元越弱金價越容易撐住",
+   "desc": "黃金用美元計價，美元轉弱偏多，走強偏空",
+   "weight": 1,
    "ids": [
     "DX-Y.NYB",
     "DTWEXBGS"
    ],
-   "score": 2,
-   "max": 4
+   "score": 1.0,
+   "max": 2,
+   "n_scored": 1,
+   "weighted": 1.0
   },
   {
    "key": "inflation",
    "name": "通膨",
    "icon": "↗",
-   "desc": "通膨降溫＝聯準會有空間降息；通膨預期升溫＝抗通膨需求",
+   "desc": "通膨越高於 2% 目標，聯準會越可能升息 → 偏空；回到目標附近才有降息空間 → 偏多",
+   "weight": 1,
    "ids": [
-    "CPILFESL",
-    "CPIAUCSL",
     "PCEPILFE",
-    "PCEPI",
+    "CPILFESL",
     "PPIFIS",
-    "T10YIE"
+    "T10YIE",
+    "PCEPI",
+    "CPIAUCSL"
    ],
-   "score": 8,
-   "max": 12
+   "score": -0.8,
+   "max": 2,
+   "n_scored": 4,
+   "weighted": -0.8
   },
   {
    "key": "jobs",
    "name": "就業",
    "icon": "◎",
-   "desc": "就業轉弱會逼聯準會降息，是黃金的間接利多",
+   "desc": "就業轉弱會逼聯準會降息 → 偏多；就業強勁讓升息沒有顧慮 → 偏空",
+   "weight": 1,
    "ids": [
     "PAYEMS",
     "UNRATE"
    ],
-   "score": 1,
-   "max": 4
+   "score": 0.5,
+   "max": 2,
+   "n_scored": 2,
+   "weighted": 0.5
   },
   {
    "key": "risk",
    "name": "避險與能源",
    "icon": "⚑",
-   "desc": "油價、恐慌指數、信用利差反映市場怕不怕",
+   "desc": "恐慌與信用壓力升高 → 避險買盤偏多；油價要看利率環境，押升息時油價漲算偏空",
+   "weight": 1,
    "ids": [
-    "DCOILWTICO",
-    "DCOILBRENTEU",
     "VIXCLS",
-    "BAMLH0A0HYM2"
+    "BAMLH0A0HYM2",
+    "DCOILWTICO",
+    "DCOILBRENTEU"
    ],
-   "score": 4,
-   "max": 8
+   "score": -0.7,
+   "max": 2,
+   "n_scored": 3,
+   "weighted": -0.7
   }
  ],
  "fed_item": {
@@ -222,16 +239,32 @@
   "unit": "%",
   "kind": "fed",
   "stats": {
-   "latest": 4.02,
+   "latest": 4.03,
    "latest_date": "2026-09-11",
-   "chg": "+39 bp vs 現在",
+   "chg": "+40 bp vs 現在",
    "spark": null
   },
   "gold_score": -1,
-  "gold_reason": "比目前利率中點 3.625% 高 +39 bp（約 2 碼升息）"
+  "gold_reason": "比目前利率中點 3.625% 高 40 bp（市場押約 2 碼升息）"
+ },
+ "gold_moves": {
+  "d1": {
+   "abs": -9.0,
+   "pct": -0.21
+  },
+  "d7": {
+   "abs": -74.3,
+   "pct": -1.68
+  },
+  "d30": {
+   "abs": -53.4,
+   "pct": -1.21
+  },
+  "date": "2026-09-11",
+  "close": 4355.5
  },
  "dxy": {
-  "level": 99.11,
+  "level": 99.14,
   "date": "2026-09-11",
   "zone": "中性",
   "zone_gold": "影響不大",
@@ -272,7 +305,7 @@
   "low10y": 89.13,
   "high10y": 112.12,
   "ma200": 99.14,
-  "vs_ma200_pct": -0.03
+  "vs_ma200_pct": 0.0
  },
  "econ": [
   {
@@ -345,10 +378,10 @@
      "2026-07-01"
     ]
    },
-   "gold_score": 2,
-   "gold_reason": "近 3 個月年化 0.5% vs 年增 3.5%，通膨降溫",
    "ann3m": 0.49,
-   "yoy": 3.54
+   "yoy": 3.54,
+   "gold_score": null,
+   "gold_reason": "整體 CPI 與核心 CPI 是同一件事，只用核心計分"
   },
   {
    "id": "CPILFESL",
@@ -420,10 +453,10 @@
      "2026-07-01"
     ]
    },
-   "gold_score": 1,
-   "gold_reason": "近 3 個月年化 1.6% vs 年增 2.8%，通膨降溫",
    "ann3m": 1.64,
-   "yoy": 2.79
+   "yoy": 2.79,
+   "gold_score": 1,
+   "gold_reason": "近 3 個月年化與年增平均 2.2%（CPI 通常比 PCE 高約 0.4，換算約 1.8%），已低於聯準會 2% 目標；越高越逼升息"
   },
   {
    "id": "PCEPI",
@@ -495,10 +528,10 @@
      "2026-07-01"
     ]
    },
-   "gold_score": 2,
-   "gold_reason": "近 3 個月年化 2.2% vs 年增 3.7%，通膨降溫",
    "ann3m": 2.2,
-   "yoy": 3.7
+   "yoy": 3.7,
+   "gold_score": null,
+   "gold_reason": "整體 PCE 與核心 PCE 是同一件事，只用核心計分"
   },
   {
    "id": "PCEPILFE",
@@ -570,10 +603,10 @@
      "2026-07-01"
     ]
    },
-   "gold_score": 0,
-   "gold_reason": "近 3 個月年化 3.0% vs 年增 3.3%，通膨持平",
    "ann3m": 3.05,
-   "yoy": 3.34
+   "yoy": 3.34,
+   "gold_score": -2,
+   "gold_reason": "近 3 個月年化與年增平均 3.2%，明顯高於聯準會 2% 目標；越高越逼升息"
   },
   {
    "id": "PPIFIS",
@@ -645,10 +678,10 @@
      "2026-08-01"
     ]
    },
-   "gold_score": 2,
-   "gold_reason": "近 3 個月年化 1.4% vs 年增 5.4%，通膨降溫",
    "ann3m": 1.4,
-   "yoy": 5.41
+   "yoy": 5.41,
+   "gold_score": -1,
+   "gold_reason": "上游物價年化約 3.4%（越高越可能傳到 CPI）"
   },
   {
    "id": "PAYEMS",
@@ -721,7 +754,7 @@
     ]
    },
    "gold_score": 1,
-   "gold_reason": "近 3 個月平均新增 71 千人"
+   "gold_reason": "近 3 個月平均新增 71 千人（100 以下偏弱、175 以上偏強）"
   },
   {
    "id": "UNRATE",
@@ -794,7 +827,7 @@
     ]
    },
    "gold_score": 0,
-   "gold_reason": "比近 12 個月低點高 0.0 個百分點"
+   "gold_reason": "比近 12 個月低點高 0.0 個百分點（升 0.5 以上是衰退警訊）"
   }
  ],
  "markets": [
@@ -804,19 +837,18 @@
    "unit": "美元／盎司",
    "source": "yahoo",
    "stats": {
-    "latest": 4367.4,
+    "latest": 4355.5,
     "latest_date": "2026-09-11",
-    "prev": 4416.0,
-    "prev_date": "2026-09-09",
-    "chg": "-48.6 美元",
-    "chg5": "+1.1 美元",
-    "chg20": "-41.5 美元",
-    "chg5_pct": "+0.03%",
-    "chg20_pct": "-0.94%",
-    "raw_chg5": 1.1001,
-    "raw_chg20": -41.5,
+    "prev": 4364.5,
+    "prev_date": "2026-09-10",
+    "chg": "-9.0 美元",
+    "chg5": "-136.2 美元",
+    "chg20": "-8.1 美元",
+    "chg5_pct": "-3.03%",
+    "chg20_pct": "-0.19%",
+    "raw_chg5": -136.2002,
+    "raw_chg20": -8.1001,
     "spark": [
-     4340.7002,
      4361.7998,
      4383.0,
      4408.8999,
@@ -839,10 +871,10 @@
      4429.7998,
      4393.8999,
      4416.0,
-     4367.3999
+     4364.5,
+     4355.5
     ],
     "spark_dates": [
-     "2026-08-07",
      "2026-08-10",
      "2026-08-11",
      "2026-08-12",
@@ -865,11 +897,12 @@
      "2026-09-04",
      "2026-09-08",
      "2026-09-09",
+     "2026-09-10",
      "2026-09-11"
     ]
    },
-   "gold_score": 0,
-   "gold_reason": ""
+   "gold_score": null,
+   "gold_reason": "觀察對象本身"
   },
   {
    "id": "DX-Y.NYB",
@@ -877,17 +910,17 @@
    "unit": "點",
    "source": "yahoo",
    "stats": {
-    "latest": 99.11,
+    "latest": 99.14,
     "latest_date": "2026-09-11",
     "prev": 99.09,
     "prev_date": "2026-09-10",
-    "chg": "+0.02 點",
-    "chg5": "+0.11 點",
-    "chg20": "-0.85 點",
-    "chg5_pct": "+0.12%",
-    "chg20_pct": "-0.85%",
-    "raw_chg5": 0.114,
-    "raw_chg20": -0.846,
+    "chg": "+0.05 點",
+    "chg5": "+0.14 點",
+    "chg20": "-0.82 點",
+    "chg5_pct": "+0.14%",
+    "chg20_pct": "-0.83%",
+    "raw_chg5": 0.135,
+    "raw_chg20": -0.825,
     "spark": [
      99.81,
      99.82,
@@ -912,7 +945,7 @@
      98.84,
      98.77,
      99.09,
-     99.114
+     99.135
     ],
     "spark_dates": [
      "2026-08-10",
@@ -943,7 +976,7 @@
     "ma200": 99.14
    },
    "gold_score": 1,
-   "gold_reason": "20 日 -0.85%"
+   "gold_reason": "20 日 -0.83%"
   },
   {
    "id": "DFII10",
@@ -1016,7 +1049,7 @@
     ]
    },
    "gold_score": 0,
-   "gold_reason": "20 日 +3 bp"
+   "gold_reason": "20 日 +3 bp（黃金最直接的對手）"
   },
   {
    "id": "DGS10",
@@ -1088,8 +1121,8 @@
      "2026-09-09"
     ]
    },
-   "gold_score": -1,
-   "gold_reason": "20 日 +13 bp"
+   "gold_score": null,
+   "gold_reason": "與 2 年期、實質殖利率重疊，只作參考"
   },
   {
    "id": "DGS2",
@@ -1162,7 +1195,7 @@
     ]
    },
    "gold_score": -2,
-   "gold_reason": "20 日 +21 bp"
+   "gold_reason": "20 日 +21 bp（上升＝市場加碼押升息）"
   },
   {
    "id": "T10YIE",
@@ -1234,8 +1267,8 @@
      "2026-09-10"
     ]
    },
-   "gold_score": 1,
-   "gold_reason": "通膨預期 20 日 +14 bp"
+   "gold_score": -1,
+   "gold_reason": "通膨預期 20 日 +14 bp；市場押升息時，通膨預期上升會加強升息壓力"
   },
   {
    "id": "DTWEXBGS",
@@ -1307,8 +1340,8 @@
      "2026-09-04"
     ]
    },
-   "gold_score": 1,
-   "gold_reason": "20 日 -0.83%"
+   "gold_score": null,
+   "gold_reason": "與 DXY 同方向，只用 DXY 計分"
   },
   {
    "id": "DCOILWTICO",
@@ -1380,8 +1413,8 @@
      "2026-09-09"
     ]
    },
-   "gold_score": 2,
-   "gold_reason": "約 1 個月 +14.7%，通膨與地緣風險溫度"
+   "gold_score": -2,
+   "gold_reason": "約 1 個月 +14.7%；市場押升息時，油價上漲推升通膨、加強升息壓力"
   },
   {
    "id": "DCOILBRENTEU",
@@ -1453,8 +1486,8 @@
      "2026-09-09"
     ]
    },
-   "gold_score": 2,
-   "gold_reason": "約 1 個月 +17.4%，通膨與地緣風險溫度"
+   "gold_score": null,
+   "gold_reason": "與 WTI 幾乎同步，只用 WTI 計分"
   },
   {
    "id": "VIXCLS",
@@ -1527,7 +1560,7 @@
     ]
    },
    "gold_score": 0,
-   "gold_reason": "VIX 16.5（20 以上算緊張）"
+   "gold_reason": "VIX 16.5（20 以上開始緊張，資金找避險）"
   },
   {
    "id": "BAMLH0A0HYM2",
@@ -1600,7 +1633,7 @@
     ]
    },
    "gold_score": 0,
-   "gold_reason": "20 日 +0 bp"
+   "gold_reason": "20 日 +0 bp（擴大＝市場怕違約）"
   }
  ],
  "errors": [],
