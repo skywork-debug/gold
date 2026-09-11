@@ -8,216 +8,247 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0e1014; --bg2:#14171d; --panel:#1a1e26; --panel2:#20252f; --line:#2c323d; --line2:#3a4150;
-  --ink:#f2ecdf; --body:#b9b3a6; --muted:#7d7869;
-  --gold:#d9b25a; --gold2:#f0d28a; --gold-dim:rgba(217,178,90,.14);
-  --bull:#5ad39a; --bull-dim:rgba(90,211,154,.14);
-  --bear:#ef6f6f; --bear-dim:rgba(239,111,111,.14);
-  --neu:#d9b25a;
+  --bg:#0b1c38; --bg2:#0f2446; --panel:#132a4f; --panel2:#18335f; --line:#21406f; --line2:#2d5288;
+  --ink:#f4eddc; --body:#c3cbdc; --muted:#8593ad;
+  --gold:#e0b04f; --gold2:#f2d38c; --gold-dim:rgba(224,176,79,.16);
+  --bull:#3cc6b4; --bull-dim:rgba(60,198,180,.16);
+  --bear:#ef6b73; --bear-dim:rgba(239,107,115,.16);
+  --neu:#e0b04f; --neu-dim:rgba(224,176,79,.14);
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--body);font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;font-size:15px;line-height:1.7}
-body::before{content:"";position:fixed;inset:0;background:radial-gradient(900px 400px at 20% -10%,rgba(217,178,90,.12),transparent 60%);pointer-events:none}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:
+  radial-gradient(1000px 480px at 15% -8%,rgba(224,176,79,.16),transparent 60%),
+  radial-gradient(900px 600px at 100% 30%,rgba(45,82,136,.35),transparent 60%)}
 .wrap{max-width:1200px;margin:0 auto;padding:0 22px 70px;position:relative}
-/* top bar */
+button{font-family:inherit}
+/* top */
 .top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:10px}
 .brand .g{font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:.18em;color:var(--gold)}
 .brand .n{font-weight:900;font-size:20px;color:var(--ink)}
 .nav{display:flex;gap:6px;flex-wrap:wrap}
-.nav a,.nav button{border:1px solid var(--line2);background:transparent;color:var(--body);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}
+.nav a,.nav button{border:1px solid var(--line2);background:rgba(255,255,255,.02);color:var(--body);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
 .nav a:hover,.nav button:hover{border-color:var(--gold);color:var(--gold)}
 /* hero */
-.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;margin:26px 0 14px}
-@media(max-width:860px){.hero{grid-template-columns:1fr}}
-.price{background:linear-gradient(160deg,#1d2028,#12151b);border:1px solid var(--line2);border-radius:20px;padding:22px 24px;position:relative;overflow:hidden}
-.price::after{content:"XAU/USD";position:absolute;right:18px;top:14px;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--muted)}
-.eyebrow{font-size:12px;letter-spacing:.18em;color:var(--gold);font-weight:700;text-transform:uppercase}
+.hero{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;margin:26px 0 12px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}}
+.hero>*,.pair>*,.tl>*,.items>*,.board>*{min-width:0}
+.card{background:linear-gradient(165deg,var(--panel2),var(--panel));border:1px solid var(--line2);border-radius:22px;padding:22px 24px;position:relative}
+.eyebrow{font-size:12px;letter-spacing:.18em;color:var(--gold);font-weight:700}
 .price h1{margin:4px 0 10px;font-size:20px;color:var(--ink);font-weight:900}
-.tv{min-height:230px;border-radius:12px;overflow:hidden;background:#0b0d11}
-.price .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.price .tag-xau{position:absolute;right:20px;top:18px;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--muted)}
+.tv{height:210px;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.18)}
+.moves{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.mv{border-radius:14px;padding:12px 14px;border:1px solid var(--line2);background:rgba(255,255,255,.03)}
+.mv .k{font-size:13px;color:var(--muted);font-weight:700}
+.mv .v{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1.2;display:flex;align-items:center;gap:6px}
+.mv .s{font-family:var(--mono);font-size:13px;color:var(--body)}
+.mv.up{background:var(--bull-dim);border-color:rgba(60,198,180,.45)} .mv.up .v{color:var(--bull)}
+.mv.dn{background:var(--bear-dim);border-color:rgba(239,107,115,.45)} .mv.dn .v{color:var(--bear)}
+@media(max-width:520px){.mv .v{font-size:17px;gap:3px}.mv{padding:9px 8px}.moves{gap:6px}.mv .s{font-size:11px}.chips4{grid-template-columns:1fr}.card{padding:18px 16px}.cat{padding:16px 14px}}
+.price .foot{font-size:12px;color:var(--muted);margin-top:10px}
 .price .foot b{color:var(--body)}
-.snap{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}
-.snap div{font-family:var(--mono);font-size:13px;color:var(--body)}
-.snap div span{display:block;font-size:11px;color:var(--muted);font-family:inherit;letter-spacing:.05em}
-.call{background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:22px 24px;display:flex;flex-direction:column;gap:10px}
-.call h2{margin:0;font-size:16px;color:var(--ink);font-weight:900;display:flex;align-items:center;gap:10px}
-.gauge{display:flex;align-items:center;gap:18px}
-.gauge svg{flex:0 0 150px}
-.gauge .txt{flex:1}
-.gauge .lab{font-size:12px;letter-spacing:.14em;color:var(--muted);font-weight:700}
-.gauge .big{font-size:26px;font-weight:900;line-height:1.3;color:var(--ink)}
-.gauge .big.bull{color:var(--bull)} .gauge .big.bear{color:var(--bear)} .gauge .big.neutral{color:var(--gold2)}
-.call p{margin:0;font-size:14px}
-.call .fine{font-size:12px;color:var(--muted);border-top:1px dashed var(--line2);padding-top:10px}
-.meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 14px;font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 4px 34px}
+.call h2{margin:0 0 6px;font-size:16px;color:var(--ink);font-weight:900}
+.verdict{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.verdict svg{flex:0 0 190px}
+.verdict .big{font-size:27px;font-weight:900;line-height:1.3}
+.big.bull{color:var(--bull)} .big.bear{color:var(--bear)} .big.neutral{color:var(--gold2)}
+.chips4{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0 10px}
+.c4{display:flex;align-items:center;gap:8px;border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.c4 .dot{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:900;font-family:var(--mono);font-size:14px;flex:0 0 26px}
+.c4 .t{font-size:13px;color:var(--ink);font-weight:700;line-height:1.3}
+.c4 .t small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+.bgb{background:var(--bull-dim);color:var(--bull)} .bgr{background:var(--bear-dim);color:var(--bear)} .bgn{background:var(--neu-dim);color:var(--gold2)}
+.fine{font-size:12px;color:var(--muted)}
+.meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 14px;font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 4px 36px}
 /* section heads */
-.sh{display:flex;align-items:baseline;gap:14px;margin:0 0 6px}
+.sh{display:flex;align-items:baseline;gap:14px;margin:0 0 6px;flex-wrap:wrap}
 .sh .k{font-family:var(--mono);color:var(--gold);font-size:13px;letter-spacing:.2em}
-.sh h2{margin:0;font-size:24px;color:var(--ink);font-weight:900}
+.sh h2{margin:0;font-size:25px;color:var(--ink);font-weight:900}
 .sh .d{font-size:14px;color:var(--muted)}
 .lead{margin:0 0 18px;font-size:14px}
-/* signal rows */
-.signals{display:flex;flex-direction:column;gap:10px;margin-bottom:34px}
-.sig{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 20px;display:grid;grid-template-columns:230px 150px 1fr;gap:16px 22px;align-items:center}
+/* pillars */
+.signals{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.sig{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 20px;display:grid;grid-template-columns:230px 150px 1fr;gap:14px 22px;align-items:center}
 @media(max-width:900px){.sig{grid-template-columns:1fr 150px}.sig .ev{grid-column:1/-1}}
 .sig .q{font-weight:900;color:var(--ink);font-size:17px;line-height:1.35}
 .sig .why{font-size:12.5px;color:var(--muted);margin-top:2px}
 .track{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.track i{height:10px;border-radius:4px;background:var(--line2);display:block}
+.track i{height:12px;border-radius:4px;background:var(--line2);display:block}
 .track i.on.bear{background:var(--bear);box-shadow:0 0 12px var(--bear)}
 .track i.on.neutral{background:var(--gold);box-shadow:0 0 12px var(--gold)}
 .track i.on.bull{background:var(--bull);box-shadow:0 0 12px var(--bull)}
-.track-l{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.05em}
+.track-l{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
 .sig .st{font-weight:900;font-size:15px;margin-bottom:2px}
-.sig .st.bull{color:var(--bull)} .sig .st.bear{color:var(--bear)} .sig .st.neutral{color:var(--gold2)}
-.sig .ev{font-size:13.5px;color:var(--body)}
-.sig .links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.tag{border:1px solid var(--line2);border-radius:8px;padding:3px 10px;font-size:12px;color:var(--body);cursor:pointer;background:transparent;font-family:inherit}
+.st.bull{color:var(--bull)} .st.bear{color:var(--bear)} .st.neutral{color:var(--gold2)}
+.sig .ev{font-size:13.5px}
+.links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{border:1px solid var(--line2);border-radius:8px;padding:3px 10px;font-size:12px;color:var(--body);cursor:pointer;background:transparent}
 .tag:hover{border-color:var(--gold);color:var(--gold)}
-/* fed strip */
-.fed{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:-20px 0 36px}
-.fed .box{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
-.fed .k{font-size:12px;color:var(--muted);font-weight:700}
-.fed .v{font-family:var(--mono);font-size:22px;color:var(--gold2);font-weight:600}
-.fed .d{font-size:12px;color:var(--body)}
+/* visual pair */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:40px}
+@media(max-width:900px){.pair{grid-template-columns:1fr}}
+.vis h3{margin:0;font-size:18px;color:var(--ink)}
+.vis .sub2{font-size:13px;color:var(--muted);margin:2px 0 10px}
+.vis svg{width:100%;height:auto;display:block}
+.kv{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+.kv div{font-size:12px;color:var(--muted)}
+.kv b{display:block;font-family:var(--mono);font-size:17px;color:var(--ink);font-weight:600}
 /* timeline */
-.tl{display:grid;grid-template-columns:1fr 1.25fr;gap:18px;margin-bottom:36px}
+.tlbar{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px 18px 8px;margin-bottom:14px;overflow-x:auto}
+.tl{display:grid;grid-template-columns:1fr 1.25fr;gap:16px;margin-bottom:40px}
 @media(max-width:900px){.tl{grid-template-columns:1fr}}
 .list{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:8px 6px}
-.ev-row{display:grid;grid-template-columns:82px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;cursor:pointer;border-left:3px solid transparent}
+.ev-row{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;cursor:pointer;border-left:3px solid transparent}
 .ev-row:hover{background:var(--panel2)}
 .ev-row.act{background:var(--gold-dim);border-left-color:var(--gold)}
-.ev-row .dt{font-family:var(--mono);font-size:13px;color:var(--gold2);line-height:1.3}
+.ev-row .dt{font-family:var(--mono);font-size:14px;color:var(--gold2);line-height:1.3}
 .ev-row .dt small{display:block;color:var(--muted);font-size:11px}
 .ev-row .nm{font-weight:700;color:var(--ink);font-size:15px}
 .ev-row .nm small{display:block;font-weight:400;color:var(--muted);font-size:12px}
-.ev-row .in{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.cd{font-family:var(--mono);font-size:12px;border-radius:999px;padding:3px 10px;background:rgba(255,255,255,.05);color:var(--body);white-space:nowrap}
+.cd.hot{background:var(--gold);color:#1a1405;font-weight:600}
 .detail{background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:22px 24px}
 .detail h3{margin:0;font-size:22px;color:var(--ink)}
-.detail .when{font-family:var(--mono);color:var(--gold2);font-size:13px;margin:4px 0 10px}
-.detail .why{font-size:14px;margin:0 0 14px}
+.detail .when{font-family:var(--mono);color:var(--gold2);font-size:14px;margin:4px 0 10px}
 .cond{border-radius:14px;padding:12px 16px;margin-bottom:10px;border:1px solid}
-.cond.bull{background:var(--bull-dim);border-color:rgba(90,211,154,.4)}
-.cond.bear{background:var(--bear-dim);border-color:rgba(239,111,111,.4)}
+.cond.bull{background:var(--bull-dim);border-color:rgba(60,198,180,.45)}
+.cond.bear{background:var(--bear-dim);border-color:rgba(239,107,115,.45)}
 .cond .h{font-weight:900;font-size:14px;margin-bottom:2px}
 .cond.bull .h{color:var(--bull)} .cond.bear .h{color:var(--bear)}
 .cond p{margin:0;font-size:14px;color:var(--ink)}
-.detail .fine{font-size:12px;color:var(--muted);margin-top:8px}
-/* tables */
-.block{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px 22px 14px;margin-bottom:22px}
-.block .hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:4px}
-.block h3{margin:0;font-size:19px;color:var(--ink)}
-.block .hint{font-size:12px;color:var(--muted)}
-.tw{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-weight:700;color:var(--muted);font-size:12px;letter-spacing:.06em;padding:10px 8px;border-bottom:1px solid var(--line2)}
-td{padding:13px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
-td.n,th.n{font-family:var(--mono);white-space:nowrap}
-.rn{font-weight:700;color:var(--ink);font-size:15px;cursor:pointer}
-.rn:hover{color:var(--gold)}
-.sub{font-size:12px;color:var(--muted);margin-top:2px}
-.pos{color:var(--bull)} .neg{color:var(--bear)}
-.big-n{color:var(--gold2);font-weight:600}
+/* scoreboard */
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:6px 0 18px}
+@media(max-width:1000px){.board{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.board{grid-template-columns:repeat(2,1fr)}}
+.bd{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;display:block}
+.bd:hover{border-color:var(--gold)}
+.bd .nm{font-weight:900;color:var(--ink);font-size:15px}
+.bd .lb{font-size:12px;font-weight:700}
+.bd svg{width:100%;max-width:170px;height:auto}
+.cat{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin-bottom:18px;scroll-margin-top:16px}
+.cat-h{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.cat-h .ic{width:40px;height:40px;border-radius:12px;background:var(--gold-dim);color:var(--gold);display:grid;place-items:center;font-weight:900;font-size:19px;font-family:var(--mono)}
+.cat-h h3{margin:0;font-size:21px;color:var(--ink)}
+.cat-h .ds{font-size:13px;color:var(--muted)}
+.cat-h .tot{margin-left:auto;display:flex;align-items:center;gap:10px}
+.cat-h .tot svg{width:120px;height:auto}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.it{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.it .top1{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.it .nm{font-weight:700;color:var(--ink);font-size:15px;cursor:pointer;line-height:1.35}
+.it .nm:hover{color:var(--gold)}
+.it .dt{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+.it .val{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.it .val b{font-family:var(--mono);font-size:28px;color:var(--ink);font-weight:600;line-height:1.1}
+.it .val span{font-size:12px;color:var(--muted)}
+.pill{font-family:var(--mono);font-size:12px;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.pill{background:rgba(255,255,255,.07);color:var(--ink)}
+.meter{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:2px}
+.meter i{height:8px;border-radius:3px;background:var(--line2)}
+.meter i.b1,.meter i.b2{background:var(--bear)} .meter i.n{background:var(--gold)} .meter i.g1,.meter i.g2{background:var(--bull)}
+.meter-l{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.meter-l .sc{font-weight:900}
+.it .why{font-size:12.5px;color:var(--body)}
+.spark{width:100%;height:46px;display:block}
 footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
 /* modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:10;backdrop-filter:blur(3px)}
+.modal{position:fixed;inset:0;background:rgba(3,10,24,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:10;backdrop-filter:blur(3px)}
 .modal.on{display:flex}
-.mbox{background:var(--panel);border:1px solid var(--gold);border-radius:20px;max-width:660px;width:100%;max-height:90vh;overflow:auto;padding:24px 26px}
+.mbox{background:var(--panel);border:1px solid var(--gold);border-radius:20px;max-width:680px;width:100%;max-height:90vh;overflow:auto;padding:24px 26px}
 .mbox h3{margin:0 0 2px;color:var(--ink);font-size:21px}
 .mbox h5{margin:16px 0 4px;color:var(--gold);font-size:12px;letter-spacing:.16em}
 .mbox p{margin:0;font-size:14px}
 .mbox .x{float:right;cursor:pointer;font-weight:900;font-size:20px;color:var(--muted)}
-.sbig{width:100%;height:110px;margin-top:8px}
-.errbox{background:var(--bear-dim);border:1px solid rgba(239,111,111,.4);color:var(--bear);border-radius:12px;padding:12px 16px;margin:14px 0;font-size:13px}
+.chartwrap{position:relative;margin-top:10px}
+.tip{position:absolute;pointer-events:none;background:#0a1730;border:1px solid var(--line2);border-radius:8px;padding:4px 8px;font-family:var(--mono);font-size:12px;color:var(--ink);white-space:nowrap;display:none;transform:translate(-50%,-110%)}
+.errbox{background:var(--bear-dim);border:1px solid rgba(239,107,115,.45);color:var(--bear);border-radius:12px;padding:12px 16px;margin:14px 0;font-size:13px}
 </style>
 </head>
 <body>
 <div class="wrap">
 <div class="top">
   <div class="brand"><span class="g">GOLD</span><span class="n">黃金觀測室</span></div>
-  <div class="nav"><a href="#s1">今日結論</a><a href="#s2">四個推力</a><a href="#s3">盯數據</a><a href="#s4">數據表</a><button onclick="openModal('src')">資料來源</button><button onclick="openModal('rules')">判讀規則</button></div>
+  <div class="nav"><a href="#s1">今日結論</a><a href="#s2">四個推力</a><a href="#s3">30 天內數據</a><a href="#s4">加減分儀表板</a><button onclick="openModal('src')">資料來源</button><button onclick="openModal('rules')">判讀規則</button></div>
 </div>
 <div id="err" class="errbox" style="display:none"></div>
 
 <!-- HERO -->
 <div class="hero" id="s1">
-  <div class="price">
-    <div class="eyebrow">Live · Pepperstone 報價</div>
+  <div class="card price">
+    <span class="tag-xau">XAU/USD</span>
+    <div class="eyebrow">LIVE · PEPPERSTONE 報價</div>
     <h1>黃金現在多少錢？</h1>
     <div class="tv" id="tv-quote"></div>
-    <div class="snap" id="snap"></div>
-    <div class="foot"><span>即時價由 TradingView 載入 <b>PEPPERSTONE:XAUUSD</b>（現貨黃金 CFD）</span><span>下方數據表另以 COMEX 期貨日收盤計算</span></div>
+    <div class="moves" id="moves"></div>
+    <div class="foot">即時價：TradingView 載入 <b>PEPPERSTONE:XAUUSD</b>；漲跌幅以 COMEX 黃金期貨日收盤計算（<span id="gdate"></span>）</div>
   </div>
-  <div class="call">
-    <h2><span class="eyebrow">01</span>今日結論：總經環境站在黃金這邊嗎？</h2>
-    <div class="gauge">
-      <svg viewBox="0 0 150 90" width="150" height="90" id="gauge"></svg>
-      <div class="txt"><div class="lab">四推力合計</div><div class="big neutral" id="v-label">載入中…</div></div>
+  <div class="card call">
+    <div class="eyebrow">01 · 今日結論</div>
+    <h2>總經環境站在黃金這邊嗎？</h2>
+    <div class="verdict">
+      <svg viewBox="0 0 190 128" width="190" height="128" id="gauge" role="img" aria-label="四推力合計儀表"></svg>
+      <div><div class="fine">四推力合計（−4 到 +4）</div><div class="big neutral" id="v-label">載入中…</div></div>
     </div>
-    <p id="v-detail"></p>
+    <div class="chips4" id="chips4"></div>
     <div class="fine">規則式判讀，只描述總經背景，不是價格預測，也不是投資建議。</div>
   </div>
 </div>
 <div class="meta"><span id="meta-left"></span><span id="meta-right"></span></div>
 
-<!-- SIGNALS -->
-<div class="sh" id="s2"><span class="k">02</span><h2>拆解四個推力</h2><span class="d">每一項都轉向，黃金的順風才算完整</span></div>
+<!-- PILLARS -->
+<div class="sh" id="s2"><span class="k">02</span><h2>拆解四個推力</h2><span class="d">四燈都亮綠，黃金的順風才算完整</span></div>
 <p class="lead">黃金不付利息，它的漲跌來自「別的資產變得多沒吸引力」。看四件事：市場押不押降息、美元強不強、扣掉通膨後的利率高不高、大家怕不怕。</p>
 <div class="signals" id="signals"></div>
-<div class="fed" id="fed"></div>
+<div class="pair">
+  <div class="card vis"><h3>降息預期路徑</h3><div class="sub2">期貨價格反推：市場認為利率接下來會走到哪</div><div id="fedpath"></div><div class="kv" id="fedkv"></div></div>
+  <div class="card vis"><h3>美元指數 DXY 強弱尺</h3><div class="sub2" id="dxysub">以 1973 年基期 100 為中線的市場慣用區間</div><div id="dxyruler"></div><div class="kv" id="dxykv"></div></div>
+</div>
 
 <!-- TIMELINE -->
-<div class="sh" id="s3"><span class="k">03</span><h2>接下來要盯的數據</h2><span class="d">點左邊任一事件，看它怎麼影響黃金</span></div>
-<div class="tl">
-  <div class="list" id="evlist"></div>
-  <div class="detail" id="evdetail"></div>
-</div>
+<div class="sh" id="s3"><span class="k">03</span><h2>30 天內要盯的數據</h2><span class="d">點任一事件，看它怎麼影響黃金</span></div>
+<div class="tlbar" id="tlbar"></div>
+<div class="tl"><div class="list" id="evlist"></div><div class="detail" id="evdetail"></div></div>
 
-<!-- TABLES -->
-<div class="sh" id="s4"><span class="k">04</span><h2>完整數據表</h2><span class="d">點指標名稱看白話解釋</span></div>
-<div class="block">
-  <div class="hd"><h3>金融市場 · 日資料</h3><span class="hint">非即時報價 · 5／20 期 ≈ 1 週／1 個月 · 1 bp＝0.01 個百分點</span></div>
-  <div class="tw"><table id="mkt"><thead><tr><th>指標 / 觀測日</th><th class="n">前期</th><th class="n">最新</th><th class="n">與前期差</th><th class="n">5 期</th><th class="n">20 期</th><th>近 24 期</th></tr></thead><tbody></tbody></table></div>
-</div>
-<div class="block">
-  <div class="hd"><h3>經濟數據 · 月資料</h3><span class="hint">物價類為季調月增率，另附 3 個月年化與年增率</span></div>
-  <div class="tw"><table id="econ"><thead><tr><th>數據 / 統計期</th><th class="n">前期</th><th class="n">本期</th><th class="n">與前期差</th><th class="n">3 個月年化</th><th class="n">年增率</th><th>近 24 期</th></tr></thead><tbody></tbody></table></div>
-</div>
+<!-- SCOREBOARD -->
+<div class="sh" id="s4"><span class="k">04</span><h2>黃金加減分儀表板</h2><span class="d">五大類、每個指標都給分：+2 強力支持 … −2 強力壓力</span></div>
+<p class="lead">指針偏右＝這一類數據對黃金有利，偏左＝不利。點上方任一儀表跳到該類，點指標名稱看白話解釋與完整走勢。</p>
+<div class="board" id="board"></div>
+<div id="cats"></div>
 
-<footer>資料：FRED（聖路易聯準銀行）、Yahoo Finance（COMEX 黃金期貨、CME 聯邦基金期貨）、TradingView × Pepperstone 即時報價、BLS／BEA／Fed 公布時間表。<br>本站為教育用途的總經背景整理，不構成投資建議；資料以官方公布為準。</footer>
+<footer>資料：FRED（聖路易聯準銀行）、Yahoo Finance（COMEX 黃金期貨、ICE 美元指數、CME 聯邦基金期貨）、TradingView × Pepperstone 即時報價、BLS／BEA／Fed 公布時間表。<br>本站為教育用途的總經背景整理，不構成投資建議；資料以官方公布為準。</footer>
 </div>
 
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="mbox" id="mbox"></div></div>
 
-<!-- TradingView 單一報價 widget：PEPPERSTONE:XAUUSD -->
 <script>
 (function(){
   const box=document.getElementById("tv-quote");
   const w=document.createElement("div"); w.className="tradingview-widget-container"; w.innerHTML='<div class="tradingview-widget-container__widget"></div>';
-  const s=document.createElement("script"); s.type="text/javascript"; s.async=true;
+  const s=document.createElement("script"); s.async=true;
   s.src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
-  s.innerHTML=JSON.stringify({symbol:"PEPPERSTONE:XAUUSD",width:"100%",height:230,locale:"zh_TW",dateRange:"1M",colorTheme:"dark",isTransparent:true,autosize:false,largeChartUrl:"",trendLineColor:"#d9b25a",underLineColor:"rgba(217,178,90,0.18)",underLineBottomColor:"rgba(217,178,90,0)"});
+  s.innerHTML=JSON.stringify({symbol:"PEPPERSTONE:XAUUSD",width:"100%",height:210,locale:"zh_TW",dateRange:"1M",colorTheme:"dark",isTransparent:true,autosize:false,largeChartUrl:"",trendLineColor:"#e0b04f",underLineColor:"rgba(224,176,79,0.2)",underLineBottomColor:"rgba(224,176,79,0)"});
   w.appendChild(s); box.appendChild(w);
 })();
 </script>
 
 <script>
+const C={bull:"#3cc6b4",bear:"#ef6b73",neu:"#e0b04f",gold2:"#f2d38c",line:"#2d5288",muted:"#8593ad",ink:"#f4eddc"};
 const DICT = {
- "GC=F":{t:"黃金期貨（COMEX）",intro:"紐約商品交易所的黃金期貨價格，是全球黃金報價的主要參考，單位為每盎司美元。",ex:"金價從 4,000 漲到 4,400，代表一盎司黃金多了 400 美元。",gold:"這就是我們觀察的對象本身。其它指標都是在解釋「為什麼金價會這樣走」。上方即時價用 Pepperstone 的現貨 CFD 報價，兩者會有幾美元價差，方向一致。"},
+ "GC=F":{t:"黃金期貨（COMEX）",intro:"紐約商品交易所的黃金期貨價格，是全球黃金報價的主要參考，單位為每盎司美元。",ex:"金價從 4,000 漲到 4,400，代表一盎司黃金多了 400 美元。",gold:"這就是我們觀察的對象本身。上方即時價用 Pepperstone 的現貨 CFD 報價，兩者會有幾美元價差，方向一致。"},
+ "DX-Y.NYB":{t:"美元指數 DXY",intro:"ICE 美元指數，衡量美元對歐元、日圓、英鎊、加幣、瑞典克朗、瑞士法郎六種貨幣的強弱，歐元權重約 58%。1973 年 3 月基期＝100。",ex:"DXY 從 98 升到 102，代表美元比一籃子貨幣整體升值約 4%。",gold:"黃金以美元計價，美元變強，其他國家買黃金變貴、需求下降，金價通常承壓。市場慣用 100 當強弱分水嶺：站上 100 偏強、105 以上算強勢；95 以下偏弱、90 以下算弱勢。更客觀的看法是看它在過去 10 年的位置（百分位）與 200 日均線。"},
  DFII10:{t:"10 年期實質殖利率",intro:"美國 10 年期抗通膨公債（TIPS）的殖利率，等於「名目利率扣掉通膨預期」，代表持有美債真正的購買力報酬。",ex:"名目殖利率 4.8%、通膨預期 2.4%，實質殖利率約 2.4%。",gold:"黃金不付利息，實質利率越高，抱黃金的機會成本越大，金價通常承壓；實質利率下降則是黃金最重要的利多。"},
  DGS10:{t:"10 年期美債殖利率",intro:"美國政府 10 年期公債的年化報酬率，是全球長期利率的基準。",ex:"殖利率從 4.6% 升到 4.8%，代表債券價格下跌、市場要求更高的利息。",gold:"名目殖利率上升通常帶動美元走強、實質利率上升，對黃金不利；反之有利。"},
- DGS2:{t:"2 年期美債殖利率",intro:"美國 2 年期公債殖利率，對聯準會未來一兩年的政策利率最敏感。",ex:"2 年期殖利率明顯高於目前聯邦基金利率，代表市場認為之後利率會更高（押升息）。",gold:"它是「降息預期」的即時溫度計：2 年期跌得比聯邦基金利率快，就是市場在押降息，對黃金有利。"},
+ DGS2:{t:"2 年期美債殖利率",intro:"美國 2 年期公債殖利率，對聯準會未來一兩年的政策利率最敏感。",ex:"2 年期殖利率明顯高於目前聯邦基金利率，代表市場認為之後利率會更高。",gold:"它是降息預期的即時溫度計：2 年期往下掉，就是市場在押降息，對黃金有利。"},
  T10YIE:{t:"10 年期通膨預期（損益兩平通膨率）",intro:"名目公債殖利率減去 TIPS 殖利率，等於市場預期未來 10 年的平均通膨。",ex:"損益兩平通膨率 2.37%，代表市場預期未來十年通膨平均約 2.4%。",gold:"通膨預期上升而名目利率不動，實質利率就下降，對黃金有利；黃金也常被視為抗通膨資產。"},
- DTWEXBGS:{t:"廣義美元指數",intro:"聯準會編製的貿易加權美元指數，衡量美元對一籃子主要貿易夥伴貨幣的強弱，比只看歐元的 DXY 更全面。",ex:"指數從 119 降到 118，代表美元對主要貨幣整體貶值。",gold:"黃金以美元計價，美元變弱，其他國家買黃金變便宜、需求上升，金價通常受支撐。"},
- DCOILWTICO:{t:"WTI 原油",intro:"美國西德州中級原油現貨價格，是美國油價的基準。",ex:"油價從 80 漲到 90 美元，運輸、製造成本都會上升。",gold:"油價上漲會推高通膨預期，市場擔心購買力被侵蝕時，資金會找黃金避險；油價大漲也常伴隨地緣風險，同樣有利黃金。但油價太高逼聯準會維持高利率時，反而不利。"},
+ DTWEXBGS:{t:"廣義美元指數",intro:"聯準會編製的貿易加權美元指數，衡量美元對 26 個主要貿易夥伴貨幣的強弱，比只偏重歐元的 DXY 更全面。",ex:"指數從 119 降到 118，代表美元對主要貨幣整體貶值。",gold:"意義同 DXY：美元越弱，黃金越容易撐住。兩者同方向時訊號更可靠。"},
+ DCOILWTICO:{t:"WTI 原油",intro:"美國西德州中級原油現貨價格，是美國油價的基準。",ex:"油價從 80 漲到 90 美元，運輸、製造成本都會上升。",gold:"油價上漲會推高通膨預期，也常伴隨地緣風險，兩者都讓資金找黃金避險。但油價高到逼聯準會維持高利率時，反而不利。"},
  DCOILBRENTEU:{t:"布蘭特原油",intro:"歐洲北海布蘭特原油價格，是國際油價的基準。",ex:"中東局勢緊張時，布蘭特通常比 WTI 反應更大。",gold:"意義同 WTI：反映通膨與地緣風險的溫度。"},
- VIXCLS:{t:"VIX 恐慌指數",intro:"由 S&P 500 選擇權推算的預期波動率，市場越害怕、數字越高。",ex:"VIX 在 15 以下代表市場平靜；超過 25～30 代表恐慌。",gold:"市場恐慌時資金湧向避險資產，黃金常受惠；不過極端崩盤初期，黃金也可能被拋售換現金。"},
- BAMLH0A0HYM2:{t:"高收益債信用利差",intro:"美國高收益（垃圾）公司債殖利率減去同天期公債殖利率，反映市場對企業違約的擔心。",ex:"利差從 2.6% 擴大到 3.5%，代表投資人要求更高的風險補償。",gold:"利差擴大＝資金環境緊、風險意識升高，通常伴隨降息預期升溫與避險需求，對黃金偏正面。"},
+ VIXCLS:{t:"VIX 恐慌指數",intro:"由 S&P 500 選擇權推算的預期波動率，市場越害怕、數字越高。",ex:"VIX 在 15 以下代表市場平靜；20 以上開始緊張；超過 30 代表恐慌。",gold:"市場恐慌時資金湧向避險資產，黃金常受惠；不過極端崩盤初期，黃金也可能被拋售換現金。"},
+ BAMLH0A0HYM2:{t:"高收益債信用利差",intro:"美國高收益（垃圾）公司債殖利率減去同天期公債殖利率，反映市場對企業違約的擔心。",ex:"利差從 2.6% 擴大到 3.5%，代表投資人要求更高的風險補償。",gold:"利差擴大＝資金環境變緊、風險意識升高，通常伴隨降息預期與避險需求，對黃金偏正面。"},
  CPIAUCSL:{t:"CPI 整體物價",intro:"消費者物價指數，衡量一般家庭購買商品與服務的價格變化，是最常被引用的通膨指標。",ex:"月增 0.3%，年化約 3.7%，高於聯準會 2% 的目標。",gold:"通膨高於預期→聯準會不敢降息→實質利率與美元走強→黃金承壓；通膨降溫則相反。"},
  CPILFESL:{t:"核心 CPI",intro:"扣除食品與能源的 CPI，波動較小，更能看出通膨的趨勢。",ex:"整體 CPI 因油價大漲，但核心 CPI 平穩，聯準會會比較看核心。",gold:"核心通膨放緩是「降息空間變大」的前提，對黃金有利。"},
  PCEPI:{t:"PCE 整體物價",intro:"個人消費支出物價指數，涵蓋範圍比 CPI 廣，是聯準會官方的通膨目標指標。",ex:"聯準會說的「通膨 2% 目標」指的就是 PCE。",gold:"同 CPI 邏輯，但對聯準會決策的影響更直接。"},
@@ -225,109 +256,200 @@ const DICT = {
  PPIFIS:{t:"PPI 最終需求",intro:"生產者物價指數，衡量企業出廠價格的變化，通常領先 CPI。",ex:"PPI 連續上漲，幾個月後 CPI 也可能跟著升。",gold:"上游漲價壓力減輕，代表通膨會繼續降溫，有利降息預期與黃金。"},
  PAYEMS:{t:"非農新增就業",intro:"美國每月新增的非農業就業人數（千人），是最重要的景氣指標之一。",ex:"新增 162 千人代表就業穩健；接近 0 或負值代表勞動市場轉弱。",gold:"就業轉弱→聯準會被迫降息→黃金利多；就業太強則降息預期降溫。"},
  UNRATE:{t:"失業率",intro:"失業人口占勞動力的比率。",ex:"失業率從 4.1% 快速升到 4.5%，常是衰退的早期警訊。",gold:"失業率上升通常伴隨降息與避險需求，對黃金有利。"},
- DFF:{t:"有效聯邦基金利率",intro:"美國銀行間隔夜拆款的實際成交利率，落在聯準會設定的目標區間內，是所有利率的起點。",ex:"目標區間 3.50–3.75%，有效利率約 3.63%。",gold:"利率越低，抱黃金的機會成本越低。"},
+ FEDX:{t:"降息預期（聯邦基金期貨）",intro:"CME 30 天聯邦基金期貨，價格＝100 − 市場預期的平均利率。拿它跟聯準會目前的利率區間中點比，就知道市場在押降息還是升息。",ex:"期貨隱含年底利率 3.96%，比現在 3.625% 高 0.33 個百分點，約等於市場押 1 碼升息。",gold:"押降息越多，抱黃金的機會成本越低，是黃金最直接的利多來源之一。"},
 };
-const fmt=(v,d=2)=>v==null?"—":Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
-const cls=s=>{if(!s)return"";if(/^[+-]0(\.0+)?( |$)/.test(s))return"";return s[0]==="+"?"pos":s[0]==="-"?"neg":""};
+const fmt=(v,d=2)=>v==null||isNaN(v)?"—":Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const dir=s=>{if(!s)return"fl";if(/^[+-]0(\.0+)?( |%|$)/.test(s))return"fl";return s[0]==="+"?"up":s[0]==="-"?"dn":"fl"};
+const arrow=s=>{const d=dir(s);return d==="up"?"▲ ":d==="dn"?"▼ ":""};
 const stanceOf=s=>s>0?"bull":s<0?"bear":"neutral";
-function spark(vals,w=110,h=32,color="#d9b25a"){
+const colOf=s=>s>0?C.bull:s<0?C.bear:C.neu;
+const decOf=id=>id==="PAYEMS"?0:id==="UNRATE"?1:id==="GC=F"?1:2;
+
+// ---------- 小元件 ----------
+function sparkSVG(vals,{w=260,h=46,color=C.gold2}={}){
   const v=(vals||[]).filter(x=>x!=null); if(v.length<2) return "";
   const mn=Math.min(...v),mx=Math.max(...v),rg=(mx-mn)||1;
-  const pts=v.map((x,i)=>[(i/(v.length-1))*(w-4)+2, h-2-((x-mn)/rg)*(h-4)]);
+  const pts=v.map((x,i)=>[(i/(v.length-1))*(w-6)+3, h-4-((x-mn)/rg)*(h-8)]);
   const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
-  const last=pts[pts.length-1];
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${d} L${last[0].toFixed(1)} ${h} L2 ${h} Z" fill="${color}" opacity=".12"/><path d="${d}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="2.4" fill="${color}"/></svg>`;
+  const L=pts[pts.length-1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path d="${d} L${L[0].toFixed(1)} ${h} L3 ${h} Z" fill="${color}" opacity=".13"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${L[0]}" cy="${L[1]}" r="3" fill="${color}"/></svg>`;
 }
-function gauge(score){
-  // −4 … +4 半圓儀表
-  const svg=document.getElementById("gauge"); const cx=75,cy=80,r=62;
-  const ang=a=>[cx+r*Math.cos(Math.PI-a),cy-r*Math.sin(Math.PI-a)];
-  const arc=(a0,a1,col,wid)=>{const [x0,y0]=ang(a0),[x1,y1]=ang(a1);return `<path d="M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}" stroke="${col}" stroke-width="${wid}" fill="none" stroke-linecap="butt"/>`};
-  const seg=Math.PI/8; let s="";
-  for(let i=0;i<8;i++){const col=i<3?"rgba(239,111,111,.35)":i<5?"rgba(217,178,90,.35)":"rgba(90,211,154,.35)";s+=arc(i*seg+0.01,(i+1)*seg-0.01,col,10)}
-  const t=((Math.max(-4,Math.min(4,score))+4)/8)*Math.PI; const [nx,ny]=ang(t);
-  const col=score>=2?"#5ad39a":score<=-2?"#ef6f6f":"#f0d28a";
-  s+=`<line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${col}" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="5" fill="${col}"/>`;
-  s+=`<text x="10" y="88" font-size="9" fill="#7d7869" font-family="IBM Plex Mono">−4</text><text x="128" y="88" font-size="9" fill="#7d7869" font-family="IBM Plex Mono">+4</text><text x="${cx}" y="${cy-18}" text-anchor="middle" font-size="20" font-weight="600" fill="${col}" font-family="IBM Plex Mono">${score>0?"+":""}${score}</text>`;
-  svg.innerHTML=s;
+function gaugeSVG(score,max,{w=190,h=128,label=true,big=true}={}){
+  const fs=big?26:19, cy=h-fs-8, cx=w/2, r=Math.min(w/2-12,cy-8);
+  const pt=a=>[cx-r*Math.cos(a),cy-r*Math.sin(a)];
+  const arc=(a0,a1,col,wd)=>{const [x0,y0]=pt(a0),[x1,y1]=pt(a1);return `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" stroke="${col}" stroke-width="${wd}" fill="none"/>`};
+  const P=Math.PI; let s="";
+  s+=arc(0.02,P*0.4-0.02,"rgba(239,107,115,.45)",12)+arc(P*0.4+0.02,P*0.6-0.02,"rgba(224,176,79,.45)",12)+arc(P*0.6+0.02,P-0.02,"rgba(60,198,180,.45)",12);
+  const f=((Math.max(-max,Math.min(max,score))+max)/(2*max)); const a=f*P; const [nx,ny]=pt(a);
+  const ratio=score/max, col=ratio>=0.2?C.bull:ratio<=-0.2?C.bear:C.gold2;
+  const [ex,ey]=[cx-(r-16)*Math.cos(a),cy-(r-16)*Math.sin(a)];
+  s+=`<line x1="${cx}" y1="${cy}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="${col}" stroke-width="3.5" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="6" fill="${col}"/>`;
+  if(label){s+=`<text x="${cx-r}" y="${cy+14}" text-anchor="middle" font-size="10" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">−${max}</text><text x="${cx+r}" y="${cy+14}" text-anchor="middle" font-size="10" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">+${max}</text>`}
+  s+=`<text x="${cx}" y="${h-3}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="${col}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${score>0?"+":""}${score}</text>`;
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="分數 ${score}／${max}">${s}</svg>`;
 }
+function meter(score){
+  const cls=["b2","b1","n","g1","g2"], idx=score+2;
+  const cells=[0,1,2,3,4].map(i=>`<i class="${i===idx?cls[i]:""}"></i>`).join("");
+  const txt=score>=2?"強力支持黃金":score===1?"支持黃金":score===0?"中性":score===-1?"壓力":"強力壓力";
+  return `<div class="meter">${cells}</div><div class="meter-l"><span class="fine">−2</span><span class="sc" style="color:${colOf(score)}">${score>0?"+":""}${score} · ${txt}</span><span class="fine">+2</span></div>`;
+}
+
 let DATA=null, curEv=0;
 function render(d){
   DATA=d;
   if(d.errors&&d.errors.length){const e=document.getElementById("err");e.style.display="block";e.textContent="部分來源暫時無法更新，保留上次資料："+d.errors.join("；");}
+  // hero: price moves
+  const g=(d.markets||[]).find(m=>m.id==="GC=F");
+  if(g&&g.stats){const s=g.stats; document.getElementById("gdate").textContent=`${s.latest_date} 收 ${fmt(s.latest,1)}`;
+    const p1=s.prev?(s.latest/s.prev-1)*100:null;
+    const mv=[["與前一日",p1==null?null:(p1>=0?"+":"")+p1.toFixed(2)+"%",s.chg||""],["5 日",s.chg5_pct,s.chg5||""],["20 日",s.chg20_pct,s.chg20||""]];
+    document.getElementById("moves").innerHTML=mv.map(([k,v,sub])=>{const dd=dir(v);const ar=dd==="up"?"▲":dd==="dn"?"▼":"■";return `<div class="mv ${dd}"><div class="k">${k}</div><div class="v"><span style="font-size:.6em">${ar}</span>${v||"—"}</div><div class="s">${sub}</div></div>`}).join("");}
+  // verdict
   const v=d.verdict;
-  gauge(v.score);
+  document.getElementById("gauge").outerHTML=gaugeSVG(v.score,4);
   const vl=document.getElementById("v-label"); vl.className="big "+v.stance; vl.textContent=v.label;
-  document.getElementById("v-detail").textContent=d.pillars.map(p=>p.title).join("、")+"。"+v.detail;
+  document.getElementById("chips4").innerHTML=d.pillars.map(p=>{const c=p.score>0?"bgb":p.score<0?"bgr":"bgn";return `<div class="c4"><div class="dot ${c}">${p.score>0?"+1":p.score<0?"−1":"0"}</div><div class="t">${p.title}<small>${p.question.replace("？","")}</small></div></div>`}).join("");
   document.getElementById("meta-left").textContent=`${d.count} 項資料 · 更新 ${d.generated_at_tpe} 台灣時間`;
   document.getElementById("meta-right").textContent=d.mode==="live"?"每日 08:30／21:30 自動更新":"目前為已保存資料";
-  // 黃金日資料快照
-  const g=(d.markets||[]).find(m=>m.id==="GC=F"); if(g&&g.stats){const s=g.stats;document.getElementById("snap").innerHTML=`<div><span>COMEX 收盤 ${s.latest_date}</span>${fmt(s.latest,1)}</div><div class="${cls(s.chg)}"><span>與前一日</span>${s.chg||"—"}</div><div class="${cls(s.chg5)}"><span>5 日</span>${s.chg5_pct||"—"}</div><div class="${cls(s.chg20)}"><span>20 日</span>${s.chg20_pct||"—"}</div>`}
-  // signals
+  // pillars
   document.getElementById("signals").innerHTML=d.pillars.map(p=>{const st=stanceOf(p.score);return `<div class="sig">
     <div><div class="q">${p.question}</div><div class="why">${p.why.replace("為什麼看：","")}</div></div>
     <div><div class="track"><i class="${p.score<0?"on bear":""}"></i><i class="${p.score===0?"on neutral":""}"></i><i class="${p.score>0?"on bull":""}"></i></div><div class="track-l"><span>壓力</span><span>中性</span><span>支持</span></div></div>
-    <div class="ev"><div class="st ${st}">${p.title}${p.score>0?" · 對黃金 +1":p.score<0?" · 對黃金 −1":" · 0"}</div>${p.evidence||"—"}<div class="links">${p.links.map(id=>`<button class="tag" onclick="openInd('${id}')">${(DICT[id]||{}).t||id}</button>`).join("")}</div></div></div>`}).join("");
-  // fed
-  const f=d.fed; const rows=[{k:"聯準會目標區間",v:f.target_range||"—",d:`有效利率 ${fmt(f.effective,2)}%`}];
-  (f.horizons||[]).forEach(h=>rows.push({k:`期貨隱含${h.label}利率`,v:fmt(h.implied,2)+"%",d:`較現在 ${h.vs_now_bp>0?"+":""}${fmt(h.vs_now_bp,0)} bp · ${h.vs_now_bp<=-25?"押降息":h.vs_now_bp>=25?"押升息":"沒明顯方向"}約 ${Math.abs(Math.round(h.vs_now_bp/25))} 碼`}));
-  if(f.proxy_2y_minus_ff_bp!=null) rows.push({k:"2 年期殖利率 − 有效利率",v:(f.proxy_2y_minus_ff_bp>0?"+":"")+fmt(f.proxy_2y_minus_ff_bp,0)+" bp",d:"正＝偏押升息；負＝偏押降息"});
-  document.getElementById("fed").innerHTML=rows.map(r=>`<div class="box"><div class="k">${r.k}</div><div class="v">${r.v}</div><div class="d">${r.d}</div></div>`).join("");
-  // timeline
-  renderEvents();
-  // tables
-  document.querySelector("#mkt tbody").innerHTML=(d.markets||[]).map(m=>{const s=m.stats||{};const dec=m.id==="GC=F"?1:2;const c20=s.chg20_pct?`${s.chg20}<div class="sub">${s.chg20_pct}</div>`:(s.chg20||"—");const c5=s.chg5_pct?`${s.chg5}<div class="sub">${s.chg5_pct}</div>`:(s.chg5||"—");return `<tr>
-    <td><div class="rn" onclick="openInd('${m.id}')">${m.name}</div><div class="sub">${s.latest_date||"—"} · ${m.unit}</div></td>
-    <td class="n">${fmt(s.prev,dec)}<div class="sub">${s.prev_date||""}</div></td><td class="n big-n">${fmt(s.latest,dec)}</td>
-    <td class="n ${cls(s.chg)}">${s.chg||"—"}</td><td class="n ${cls(s.chg5)}">${c5}</td><td class="n ${cls(s.chg20)}">${c20}</td><td>${spark(s.spark)}</td></tr>`}).join("");
-  document.querySelector("#econ tbody").innerHTML=(d.econ||[]).map(e=>{const s=e.stats||{};const dec=e.id==="PAYEMS"?0:e.id==="UNRATE"?1:2;return `<tr>
-    <td><div class="rn" onclick="openInd('${e.id}')">${e.name}</div><div class="sub">${e.period||"—"} · ${e.unit}</div></td>
-    <td class="n">${fmt(s.prev,dec)}</td><td class="n big-n">${fmt(s.latest,dec)}</td><td class="n ${cls(s.chg)}">${s.chg||"—"}</td>
-    <td class="n">${e.ann3m!=null?fmt(e.ann3m,2)+"%":"—"}</td><td class="n">${e.yoy!=null?fmt(e.yoy,2)+"%":"—"}</td><td>${spark(s.spark)}</td></tr>`}).join("");
+    <div class="ev"><div class="st ${st}">${p.title}${p.score>0?" · +1":p.score<0?" · −1":" · 0"}</div>${p.evidence||"—"}<div class="links">${p.links.map(id=>`<button class="tag" onclick="openInd('${id}')">${(DICT[id]||{}).t||id}</button>`).join("")}</div></div></div>`}).join("");
+  renderFedPath(d.fed); renderDXY(d.dxy);
+  renderTimeline(); renderEvents();
+  renderBoard();
+}
+function renderFedPath(f){
+  const el=document.getElementById("fedpath"); if(!f||f.target_mid==null){el.innerHTML='<div class="fine">無資料</div>';return}
+  const pts=[{l:"現在",v:f.target_mid}].concat((f.horizons||[]).map(h=>({l:h.label,v:h.implied})));
+  const W=520,H=190,pl=46,pr=70,pt=26,pb=34;
+  const vs=pts.map(p=>p.v), mn=Math.min(...vs)-0.3, mx=Math.max(...vs)+0.3;
+  const X=i=>pl+i*(W-pl-pr)/(pts.length-1), Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
+  let s="";
+  for(let k=Math.ceil(mn*4)/4;k<=mx;k+=0.25){const y=Y(k);s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="${C.line}" stroke-width="1" opacity=".5"/><text x="${pl-8}" y="${y+4}" text-anchor="end" font-size="11" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${k.toFixed(2)}</text>`}
+  s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(f.target_mid)}" y2="${Y(f.target_mid)}" stroke="${C.gold2}" stroke-dasharray="4 4" stroke-width="1.2"/>`;
+  const d=pts.map((p,i)=>(i?"L":"M")+X(i)+" "+Y(p.v)).join(" ");
+  const up=pts[pts.length-1].v>f.target_mid; const col=Math.abs(pts[pts.length-1].v-f.target_mid)<0.25?C.gold2:up?C.bear:C.bull;
+  s+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="2.5"/>`;
+  pts.forEach((p,i)=>{const bp=Math.round((p.v-f.target_mid)*100);s+=`<circle cx="${X(i)}" cy="${Y(p.v)}" r="6" fill="${i?col:C.gold2}" stroke="#132a4f" stroke-width="2"/><text x="${X(i)+(i?0:10)}" y="${Y(p.v)+(i?-12:22)}" text-anchor="${i?"middle":"start"}" font-size="13" font-weight="600" fill="${C.ink}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${p.v.toFixed(2)}%${i?` (${bp>0?"+":""}${bp})`:""}</text><text x="${X(i)}" y="${H-10}" text-anchor="middle" font-size="12" fill="${C.muted}">${p.l}</text>`});
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="降息預期路徑">${s}</svg>`;
+  const h=(f.horizons||[])[0];
+  document.getElementById("fedkv").innerHTML=`<div>聯準會目標區間<b>${f.target_range||"—"}</b></div>`+(h?`<div>市場押到年底<b style="color:${h.vs_now_bp>=25?C.bear:h.vs_now_bp<=-25?C.bull:C.gold2}">${h.vs_now_bp>0?"升息":"降息"}約 ${Math.abs(Math.round(h.vs_now_bp/25))} 碼</b></div>`:"")+`<div>虛線<b style="font-size:13px;font-family:inherit;color:var(--body)">＝目前利率；線往上＝押升息（黃金壓力）</b></div>`;
+}
+function renderDXY(x){
+  const el=document.getElementById("dxyruler"); if(!x){el.innerHTML='<div class="fine">無資料</div>';return}
+  const W=520,H=150,pl=16,pr=16,lo=85,hi=115, X=v=>pl+(Math.max(lo,Math.min(hi,v))-lo)/(hi-lo)*(W-pl-pr);
+  const cols=["rgba(60,198,180,.55)","rgba(60,198,180,.28)","rgba(224,176,79,.3)","rgba(239,107,115,.28)","rgba(239,107,115,.55)"];
+  let s=""; const y0=58,bh=26;
+  x.zones.forEach((z,i)=>{const a=X(Math.max(z.lo,lo)),b=X(Math.min(z.hi,hi));s+=`<rect x="${a+1}" y="${y0}" width="${b-a-2}" height="${bh}" rx="4" fill="${cols[i]}"/><text x="${(a+b)/2}" y="${y0+bh+18}" text-anchor="middle" font-size="12" fill="${C.body||"#c3cbdc"}" font-weight="700">${z.label}</text>`});
+  [90,95,100,105].forEach(t=>{s+=`<text x="${X(t)}" y="${y0-6}" text-anchor="middle" font-size="11" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${t}</text>`});
+  if(x.low10y&&x.high10y){s+=`<line x1="${X(x.low10y)}" x2="${X(x.high10y)}" y1="${y0+bh+30}" y2="${y0+bh+30}" stroke="${C.muted}" stroke-width="2"/><line x1="${X(x.low10y)}" x2="${X(x.low10y)}" y1="${y0+bh+25}" y2="${y0+bh+35}" stroke="${C.muted}" stroke-width="2"/><line x1="${X(x.high10y)}" x2="${X(x.high10y)}" y1="${y0+bh+25}" y2="${y0+bh+35}" stroke="${C.muted}" stroke-width="2"/><text x="${X(x.high10y)}" y="${y0+bh+48}" text-anchor="end" font-size="11" fill="${C.muted}">近 10 年區間 ${fmt(x.low10y,1)}–${fmt(x.high10y,1)}</text>`}
+  if(x.ma200){s+=`<line x1="${X(x.ma200)}" x2="${X(x.ma200)}" y1="${y0-2}" y2="${y0+bh+2}" stroke="${C.ink}" stroke-width="2" stroke-dasharray="3 3"/>`}
+  const cx=X(x.level); s+=`<path d="M${cx} ${y0-2} l-9 -14 h18 z" fill="${C.gold2}"/><text x="${cx}" y="${y0-22}" text-anchor="middle" font-size="16" font-weight="600" fill="${C.gold2}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${fmt(x.level,2)}</text>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="美元指數強弱尺">${s}</svg>`;
+  document.getElementById("dxysub").textContent=`目前 ${fmt(x.level,2)}，落在「${x.zone}」區（${x.zone_gold}）`;
+  document.getElementById("dxykv").innerHTML=(x.pct10y!=null?`<div>比過去 10 年<b>${x.pct10y}% 的時間高</b></div>`:"")+(x.median10y?`<div>10 年中位數<b>${fmt(x.median10y,1)}</b></div>`:"")+(x.ma200?`<div>200 日均線（虛線）<b style="color:${x.vs_ma200_pct>0?C.bear:C.bull}">${fmt(x.ma200,2)}（${x.vs_ma200_pct>0?"+":""}${fmt(x.vs_ma200_pct,2)}%）</b></div>`:"");
+}
+function renderTimeline(){
+  const up=DATA.upcoming||[], el=document.getElementById("tlbar");
+  if(!up.length){el.innerHTML='<div class="fine">30 天內沒有排定事件，請更新 data/calendar.json。</div>';return}
+  const W=1100,H=100,pl=20,pr=20, X=d=>pl+Math.min(30,Math.max(0,d))/30*(W-pl-pr);
+  let s=`<line x1="${pl}" x2="${W-pr}" y1="58" y2="58" stroke="${C.line}" stroke-width="3" stroke-linecap="round"/>`;
+  [0,7,14,21,30].forEach(t=>{s+=`<line x1="${X(t)}" x2="${X(t)}" y1="52" y2="64" stroke="${C.line}" stroke-width="2"/><text x="${X(t)}" y="84" text-anchor="middle" font-size="12" fill="${C.muted}">${t===0?"今天":t+" 天"}</text>`});
+  let labels=""; const lastEnd=[-1e9,-1e9,-1e9]; const LV=[34,18,2];
+  up.forEach((e,i)=>{const dd=e.days_left+(parseInt(e.time_tpe.slice(6,8))/24); const x=X(dd);
+    const label=`${e.time_tpe.slice(0,5)} ${e.name.replace(/（.*?）/,"").replace("消費者物價","").replace("＋點陣圖","").replace("最終需求","")}`;
+    const tw=label.length*9+10; let anchor="middle", x0=x-tw/2; if(x0<pl){anchor="start";x0=x-4} else if(x+tw/2>W-pr){anchor="end";x0=x-tw+4}
+    let lv=lastEnd.findIndex(end=>x0>end+8); if(lv<0) lv=2; lastEnd[lv]=x0+tw; const y=LV[lv]+12;
+    const col=/FOMC/.test(e.name)?C.bear:/CPI|PCE|PPI/.test(e.name)?C.gold2:C.bull;
+    labels+=`<text style="cursor:pointer" onclick="curEv=${i};renderEvents();renderTimeline()" x="${anchor==="start"?x-4:anchor==="end"?x+4:x}" y="${y}" text-anchor="${anchor}" font-size="12.5" font-weight="700" fill="${i===curEv?C.gold2:C.ink}" stroke="#132a4f" stroke-width="5" paint-order="stroke" stroke-linejoin="round">${label}</text>`;
+    s+=`<g style="cursor:pointer" onclick="curEv=${i};renderEvents();renderTimeline()"><line x1="${x}" x2="${x}" y1="${y+4}" y2="58" stroke="${col}" stroke-width="1.5" opacity=".6"/><circle cx="${x}" cy="58" r="${i===curEv?8:6}" fill="${col}" stroke="#132a4f" stroke-width="2"/></g>`});
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="min-width:720px;width:100%" role="img" aria-label="30 天數據時間軸">${s}${labels}</svg><div class="fine" style="margin-top:2px"><span style="color:${C.gold2}">●</span> 物價數據　<span style="color:${C.bull}">●</span> 就業數據　<span style="color:${C.bear}">●</span> 聯準會利率決議</div>`;
 }
 function renderEvents(){
-  const up=DATA.upcoming||[];
-  const list=document.getElementById("evlist");
-  if(!up.length){list.innerHTML='<div class="ev-row"><div class="nm">近期沒有排定事件<small>請更新 data/calendar.json</small></div></div>';document.getElementById("evdetail").innerHTML="";return}
-  list.innerHTML=up.map((e,i)=>`<div class="ev-row ${i===curEv?"act":""}" onclick="curEv=${i};renderEvents()"><div class="dt">${e.time_tpe.slice(0,5)}<small>${e.weekday} ${e.time_tpe.slice(6)}</small></div><div class="nm">${e.name}<small>${e.period||""}</small></div><div class="in">${e.days_left<=0?"今天":e.days_left+" 天後"}</div></div>`).join("");
+  const up=DATA.upcoming||[], list=document.getElementById("evlist");
+  if(!up.length){list.innerHTML="";document.getElementById("evdetail").innerHTML="";return}
+  list.innerHTML=up.map((e,i)=>`<div class="ev-row ${i===curEv?"act":""}" onclick="curEv=${i};renderEvents();renderTimeline()"><div class="dt">${e.time_tpe.slice(0,5)}<small>${e.weekday} ${e.time_tpe.slice(6)}</small></div><div class="nm">${e.name}<small>${e.period||""}</small></div><div class="cd ${e.days_left<=1?"hot":""}">${e.days_left<=0?"今天":e.days_left===1?"明天":e.days_left+" 天後"}</div></div>`).join("");
   const n=up[curEv];
   document.getElementById("evdetail").innerHTML=`<h3>${n.name}<span style="font-size:14px;color:var(--muted);font-weight:400;margin-left:8px">${n.period||""}</span></h3>
     <div class="when">${n.date_iso} ${n.weekday} ${n.time_tpe.slice(6)} · 台灣時間</div>
-    <p class="why">${n.why||""}</p>
-    <div class="cond bull"><div class="h">↑ 對黃金是支持，如果…</div><p>${n.bull}</p></div>
-    <div class="cond bear"><div class="h">↓ 對黃金是壓力，如果…</div><p>${n.bear}</p></div>
+    <p style="margin:0 0 14px;font-size:14px">${n.why||""}</p>
+    <div class="cond bull"><div class="h">▲ 對黃金是支持，如果…</div><p>${n.bull}</p></div>
+    <div class="cond bear"><div class="h">▼ 對黃金是壓力，如果…</div><p>${n.bear}</p></div>
     <div class="fine">以上是觀察條件，不代表已發生；市場預估值請以公布前的財經行事曆為準。</div>
-    ${n.series?`<div style="margin-top:12px"><button class="tag" onclick="openInd('${n.series}')">看「${(DICT[n.series]||{}).t||n.series}」的白話說明</button></div>`:""}`;
+    ${n.series&&DICT[n.series]?`<div style="margin-top:12px"><button class="tag" onclick="openInd('${n.series}')">看「${DICT[n.series].t}」的白話說明與走勢</button></div>`:""}`;
+}
+function itemById(id){ if(id==="FEDX") return DATA.fed_item; return [...(DATA.econ||[]),...(DATA.markets||[])].find(x=>x.id===id); }
+function renderBoard(){
+  const cats=DATA.categories||[];
+  document.getElementById("board").innerHTML=cats.map(c=>{const ratio=c.score/c.max;const lb=ratio>=0.2?"偏向支持":ratio<=-0.2?"偏向壓力":"中性";return `<a class="bd" href="#cat-${c.key}"><div class="nm">${c.name}</div>${gaugeSVG(c.score,c.max,{w:170,h:112,big:false})}<div class="lb" style="color:${ratio>=0.2?C.bull:ratio<=-0.2?C.bear:C.gold2}">${lb}</div></a>`}).join("");
+  document.getElementById("cats").innerHTML=cats.map(c=>{
+    const items=c.ids.map(itemById).filter(Boolean);
+    return `<section class="cat" id="cat-${c.key}"><div class="cat-h"><div class="ic">${c.icon}</div><div><h3>${c.name}</h3><div class="ds">${c.desc}</div></div><div class="tot"><span class="fine">本類合計</span>${gaugeSVG(c.score,c.max,{w:130,h:96,label:false,big:false})}</div></div>
+    <div class="items">${items.map(card).join("")}</div></section>`}).join("");
+}
+function card(it){
+  const s=it.stats||{}, dec=decOf(it.id);
+  const isEcon=!!it.period;
+  const sub=isEcon?`${it.period} · ${it.unit}`:`${s.latest_date||""} · ${it.unit}`;
+  let pills="";
+  if(it.id==="FEDX"){pills=`<span class="pill">${arrow(s.chg)}${s.chg}</span>`}
+  else if(isEcon){pills=`<span class="pill">與前期 ${arrow(s.chg)}${s.chg||"—"}</span>`+(it.ann3m!=null?`<span class="pill fl">3M 年化 ${fmt(it.ann3m,1)}%</span>`:"")+(it.yoy!=null?`<span class="pill fl">年增 ${fmt(it.yoy,1)}%</span>`:"")}
+  else {pills=`<span class="pill">1 日 ${arrow(s.chg)}${s.chg||"—"}</span><span class="pill">20 日 ${arrow(s.chg20)}${s.chg20_pct||s.chg20||"—"}</span>`}
+  const sp=s.spark?sparkSVG(s.spark):"";
+  return `<div class="it"><div class="top1"><div class="nm" onclick="openInd('${it.id}')">${it.name} ›</div></div>
+   <div class="val"><b>${fmt(s.latest,dec)}</b><span>${sub}</span></div>
+   <div style="display:flex;gap:6px;flex-wrap:wrap">${pills}</div>
+   ${sp}
+   ${meter(it.gold_score||0)}
+   <div class="why">${it.gold_reason||""}</div></div>`;
+}
+function bigChart(it){
+  const s=it.stats; if(!s||!s.spark) return "";
+  const v=s.spark, dts=s.spark_dates||[]; const W=620,H=170,pl=44,pr=12,pt=10,pb=24;
+  const mn=Math.min(...v),mx=Math.max(...v),rg=(mx-mn)||1;
+  const X=i=>pl+i*(W-pl-pr)/(v.length-1), Y=x=>pt+(mx-x)/rg*(H-pt-pb);
+  let g=""; for(let k=0;k<=3;k++){const val=mn+rg*k/3,y=Y(val);g+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="${C.line}" opacity=".5"/><text x="${pl-6}" y="${y+4}" text-anchor="end" font-size="10.5" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${fmt(val,decOf(it.id))}</text>`}
+  const d=v.map((x,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(x).toFixed(1)).join(" ");
+  g+=`<path d="${d} L${X(v.length-1)} ${H-pb} L${pl} ${H-pb} Z" fill="${C.gold2}" opacity=".12"/><path d="${d}" fill="none" stroke="${C.gold2}" stroke-width="2"/>`;
+  if(dts.length){g+=`<text x="${pl}" y="${H-6}" font-size="10.5" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${dts[0]}</text><text x="${W-pr}" y="${H-6}" text-anchor="end" font-size="10.5" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${dts[dts.length-1]}</text>`}
+  g+=`<line id="cx" x1="0" x2="0" y1="${pt}" y2="${H-pb}" stroke="${C.muted}" stroke-dasharray="3 3" style="display:none"/><circle id="cd" r="4" fill="${C.gold2}" style="display:none"/><rect x="${pl}" y="0" width="${W-pl-pr}" height="${H}" fill="transparent" id="hit"/>`;
+  setTimeout(()=>{const svg=document.getElementById("bigsvg"),tip=document.getElementById("tip");if(!svg)return;const hit=svg.querySelector("#hit");
+    const mvf=e=>{const r=svg.getBoundingClientRect();const px=(e.clientX-r.left)/r.width*W;let i=Math.round((px-pl)/(W-pl-pr)*(v.length-1));i=Math.max(0,Math.min(v.length-1,i));const x=X(i),y=Y(v[i]);
+      const cx=svg.querySelector("#cx"),cd=svg.querySelector("#cd");cx.setAttribute("x1",x);cx.setAttribute("x2",x);cx.style.display="";cd.setAttribute("cx",x);cd.setAttribute("cy",y);cd.style.display="";
+      tip.style.display="block";tip.style.left=(x/W*r.width)+"px";tip.style.top=(y/H*r.height)+"px";tip.textContent=`${dts[i]||""}  ${fmt(v[i],decOf(it.id))}`};
+    hit.addEventListener("mousemove",mvf);hit.addEventListener("mouseleave",()=>{tip.style.display="none";svg.querySelector("#cx").style.display="none";svg.querySelector("#cd").style.display="none"});},0);
+  return `<div class="chartwrap"><svg id="bigsvg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="近 24 期走勢">${g}</svg><div class="tip" id="tip"></div></div><div class="fine">近 24 期走勢，滑鼠移上去看每一期數值</div>`;
 }
 function openInd(id){
-  const info=DICT[id]||{t:id,intro:"",ex:"",gold:""};
-  const ser=[...(DATA.econ||[]),...(DATA.markets||[])].find(x=>x.id===id); const s=ser&&ser.stats;
+  const info=DICT[id]||{t:id,intro:"",ex:"",gold:""}; const it=itemById(id); const s=it&&it.stats;
   document.getElementById("mbox").innerHTML=`<span class="x" onclick="closeModal()">✕</span><h3>${info.t}</h3>
-   <div class="sub">${ser?`${ser.unit} · 最新 ${s.latest_date||ser.period||""}：<b class="big-n">${fmt(s.latest, id==="PAYEMS"?0:id==="GC=F"?1:2)}</b>${s.chg?`（與前期差 ${s.chg}）`:""}`:"FRED 代碼："+id}</div>
-   ${s?`<div class="sbig">${spark(s.spark,600,110)}</div>`:""}
+   ${s?`<div class="fine">${it.unit} · 最新 ${s.latest_date||it.period||""}：<b style="color:var(--gold2);font-family:var(--mono)">${fmt(s.latest,decOf(id))}</b>${s.chg?`（${s.chg}）`:""}</div>`:""}
+   ${it?bigChart(it):""}
+   ${it&&it.gold_score!=null?`<div style="margin-top:10px">${meter(it.gold_score)}<div class="fine" style="margin-top:2px">${it.gold_reason||""}</div></div>`:""}
    <h5>白話介紹</h5><p>${info.intro}</p><h5>舉例</h5><p>${info.ex}</p><h5>對黃金的意義</h5><p>${info.gold}</p>`;
   document.getElementById("modal").classList.add("on");
 }
 function openModal(k){
   const html=k==="src"?`<span class="x" onclick="closeModal()">✕</span><h3>資料來源</h3>
-   <h5>即時金價</h5><p>TradingView 嵌入元件，符號 PEPPERSTONE:XAUUSD（Pepperstone 現貨黃金 CFD 報價），在你的瀏覽器裡即時更新。</p>
-   <h5>金融市場（日）</h5><p>FRED：DFII10、DGS10、DGS2、T10YIE、DTWEXBGS、DCOILWTICO、DCOILBRENTEU、VIXCLS、BAMLH0A0HYM2、DFF、DFEDTARU／L。Yahoo Finance：GC=F（COMEX 黃金期貨）、ZQ 聯邦基金期貨。</p>
-   <h5>經濟數據（月）</h5><p>FRED：CPIAUCSL、CPILFESL、PCEPI、PCEPILFE、PPIFIS、PAYEMS、UNRATE。物價類由指數水準換算季調月增率。</p>
-   <h5>公布時間表</h5><p>BLS（CPI／PPI／非農）、BEA（PCE）、聯準會（FOMC），存於 data/calendar.json。</p>
+   <h5>即時金價</h5><p>TradingView 嵌入元件，符號 PEPPERSTONE:XAUUSD（Pepperstone 現貨黃金 CFD 報價），在瀏覽器裡即時更新。</p>
+   <h5>金融市場（日）</h5><p>FRED：DFII10、DGS10、DGS2、T10YIE、DTWEXBGS、DCOILWTICO、DCOILBRENTEU、VIXCLS、BAMLH0A0HYM2、DFF、DFEDTARU／L。Yahoo Finance：GC=F（COMEX 黃金）、DX-Y.NYB（美元指數）、ZQ 聯邦基金期貨。</p>
+   <h5>經濟數據（月）</h5><p>FRED：CPIAUCSL、CPILFESL、PCEPI、PCEPILFE、PPIFIS、PAYEMS、UNRATE。</p>
+   <h5>公布時間表</h5><p>BLS（CPI／PPI／非農）、BEA（PCE）、聯準會（FOMC），存於 data/calendar.json，只顯示 30 天內。</p>
    <h5>更新方式</h5><p>GitHub Actions 每日台灣時間 08:30 與 21:30 自動抓取並重新判讀。</p>`
   :`<span class="x" onclick="closeModal()">✕</span><h3>判讀規則（規則式，不用 AI）</h3>
-   <p>四個推力各給 +1（支持黃金）／0／−1（壓力），加總：≥ +2 順風、≤ −2 逆風、其餘中性。</p>
-   <h5>① 降息預期</h5><p>聯邦基金期貨隱含「年底利率」減目前目標中點：≤ −25 bp 為 +1，≥ +25 bp 為 −1。抓不到期貨時改用「2 年期殖利率 − 有效聯邦基金利率」。</p>
-   <h5>② 美元</h5><p>廣義美元指數 20 個交易日變化：跌 ≥ 0.5% 為 +1，漲 ≥ 0.5% 為 −1。</p>
-   <h5>③ 實質利率</h5><p>10 年期實質殖利率 20 個交易日變化：降 ≥ 10 bp 為 +1，升 ≥ 10 bp 為 −1。</p>
-   <h5>④ 避險需求</h5><p>WTI 20 日漲 ≥ 5%、VIX ≥ 20、高收益債利差 20 日擴大 ≥ 20 bp 各算一票正向（反向亦然），兩票以上同向才計分。</p>
-   <p class="sub" style="margin-top:12px">門檻都寫在 scripts/fetch_data.py 的 score_* 函式，可自行調整。</p>`;
+   <h5>今日結論（四個推力）</h5><p>各給 +1／0／−1，加總 ≥ +2 順風、≤ −2 逆風、其餘中性。① 降息預期：期貨隱含年底利率比現在低 25 bp 以上 +1、高 25 bp 以上 −1。② 美元：DXY 20 日跌 ≥ 0.5% +1、漲 ≥ 0.5% −1。③ 實質利率：10 年期 TIPS 20 日降 ≥ 10 bp +1、升 ≥ 10 bp −1。④ 避險：油價 20 日漲 ≥ 5%、VIX ≥ 20、信用利差 20 日擴大 ≥ 20 bp，兩票以上同向才計分。</p>
+   <h5>加減分儀表板（每個指標 −2～+2）</h5><p>物價類：近 3 個月年化比年增率低 0.5 個百分點以上 +1、低 1.5 以上 +2（通膨降溫＝降息空間），反向為負。非農：近 3 個月平均新增 &lt;100 千人 +1、&lt;50 +2，&gt;175 −1、&gt;250 −2。失業率：比近 12 個月低點高 0.3 +1、0.5 +2。殖利率：20 日降 8 bp +1、20 bp +2（實質殖利率門檻 10／25 bp），反向為負。通膨預期：20 日升 8 bp +1、20 bp +2。美元：20 日跌 0.5% +1、1.5% +2。油價：約 1 個月漲 5% +1、10% +2。VIX：≥20 +1、≥25 +2、≤13 −1。信用利差：20 日擴大 20 bp +1、50 bp +2。</p>
+   <h5>美元指數強弱區間</h5><p>沒有官方標準。本站用市場慣用的 1973 年基期 100 為中線：&lt;90 弱勢、90–95 偏弱、95–100 中性、100–105 偏強、&gt;105 強勢；另外附上「過去 10 年百分位」與「200 日均線」兩個較客觀的參考。</p>
+   <p class="fine" style="margin-top:12px">門檻寫在 scripts/fetch_data.py，可自行調整。</p>`;
   document.getElementById("mbox").innerHTML=html; document.getElementById("modal").classList.add("on");
 }
 function closeModal(){document.getElementById("modal").classList.remove("on")}
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 fetch("data/data.json?t="+Date.now()).then(r=>r.json()).then(render).catch(err=>{
-  const e=document.getElementById("err");e.style.display="block";e.textContent="讀不到 data/data.json：請先執行 python scripts/fetch_data.py（或用本機伺服器開啟）。"+err;
+  const e=document.getElementById("err");e.style.display="block";e.textContent="讀不到 data/data.json："+err;
 });
 </script>
 </body>
