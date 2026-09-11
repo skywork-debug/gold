@@ -50,7 +50,7 @@ ECON_SERIES = [
 ]
 
 MARKET_SERIES = [
-    dict(id="GC=F", src="yahoo", name="黃金期貨（COMEX）", unit="美元／盎司", dec=1, diff_unit="美元", pct=True),
+    dict(id="GC=F", src="yahoo", rng="2y", name="黃金期貨（COMEX）", unit="美元／盎司", dec=1, diff_unit="美元", pct=True),
     dict(id="DX-Y.NYB", src="yahoo", rng="2y", name="美元指數 DXY", unit="點", dec=2, diff_unit="點", pct=True),
     dict(id="DFII10", src="fred", name="10 年期實質殖利率", unit="%", dec=2, diff_unit="bp"),
     dict(id="DGS10", src="fred", name="10 年期美債殖利率", unit="%", dec=2, diff_unit="bp"),
@@ -608,6 +608,81 @@ def build_verdict_total(categories):
                 detail=dt + ("（" + "；".join(parts) + "）" if parts else "。"))
 
 
+def technicals(rows):
+    """技術位置：50／200 日均線、近 20 日與 52 週高低點。只描述位置，不計分。"""
+    if not rows or len(rows) < 50:
+        return None
+    vals = [v for _, v in rows]
+    last = vals[-1]
+    ma50 = sum(vals[-50:]) / 50
+    ma200 = sum(vals[-200:]) / 200 if len(vals) >= 200 else None
+    y = vals[-252:]
+    t = dict(last=r(last, 1), ma50=r(ma50, 1), ma200=r(ma200, 1),
+             hi20=r(max(vals[-20:]), 1), lo20=r(min(vals[-20:]), 1),
+             hi52=r(max(y), 1), lo52=r(min(y), 1),
+             vs_ma50=r((last / ma50 - 1) * 100, 2),
+             vs_ma200=r((last / ma200 - 1) * 100, 2) if ma200 else None, date=rows[-1][0])
+    if ma200:
+        above50, above200, cross = last > ma50, last > ma200, ma50 > ma200
+        if above50 and above200:
+            t["trend"], t["stance"] = "多頭結構：價格在 50 與 200 日均線之上", "bull"
+        elif not above50 and not above200:
+            t["trend"], t["stance"] = "空頭結構：價格在 50 與 200 日均線之下", "bear"
+        elif above50 and not above200:
+            t["trend"], t["stance"] = "反彈中：站回 50 日線，但仍在 200 日線下方", "neutral"
+        else:
+            t["trend"], t["stance"] = "回檔中：跌破 50 日線，但仍在 200 日線上方", "neutral"
+        t["cross"] = "50 日線在 200 日線之上（中期偏多排列）" if cross else "50 日線在 200 日線之下（中期偏空排列）"
+    return t
+
+
+def fetch_cot(seed):
+    """CFTC 分類持倉報告（Disaggregated, Futures Only），COMEX 黃金 088691。
+    看「管理基金（避險基金、CTA）」淨多單在過去 3 年的百分位，判斷擁擠度。"""
+    rows = []
+    if seed:
+        p = SEED_DIR / "COT_GOLD.csv"
+        if not p.exists():
+            return None
+        for rr in csv.DictReader(io.StringIO(p.read_text())):
+            rows.append((rr["date"], float(rr["net"]), float(rr["oi"])))
+    else:
+        start = (date.today() - timedelta(days=3 * 365 + 14)).isoformat()
+        q = urllib.parse.urlencode({
+            "$select": "report_date_as_yyyy_mm_dd,m_money_positions_long_all,m_money_positions_short_all,open_interest_all",
+            "cftc_contract_market_code": "088691",
+            "$where": f"report_date_as_yyyy_mm_dd>'{start}'",
+            "$order": "report_date_as_yyyy_mm_dd", "$limit": "500"})
+        j = json.loads(http_get("https://publicreporting.cftc.gov/resource/72hh-3qpy.json?" + q))
+        for o in j:
+            try:
+                rows.append((o["report_date_as_yyyy_mm_dd"][:10],
+                             float(o["m_money_positions_long_all"]) - float(o["m_money_positions_short_all"]),
+                             float(o["open_interest_all"])))
+            except (KeyError, ValueError):
+                pass
+    if len(rows) < 30:
+        return None
+    nets = [n for _, n, _ in rows]
+    last_d, last_n, last_oi = rows[-1]
+    pct = round(sum(1 for n in nets if n <= last_n) / len(nets) * 100)
+    if pct >= 90:
+        zone, stance, note = "多方極度擁擠", "bear", "大家幾乎都已經買了，後面能加碼的人變少，一有利空容易多殺多"
+    elif pct >= 75:
+        zone, stance, note = "多方偏擁擠", "neutral", "多單偏多，追多的空間變小，要留意回檔"
+    elif pct <= 10:
+        zone, stance, note = "空方極度擁擠", "bull", "看空或觀望的人已經很多，一有利多容易軋空反彈"
+    elif pct <= 25:
+        zone, stance, note = "多單偏少", "neutral", "投機資金還沒大舉進場，上漲時有加碼空間"
+    else:
+        zone, stance, note = "中性", "neutral", "投機部位在正常區間，沒有擁擠"
+    return dict(date=last_d, net=int(last_n), oi=int(last_oi), net_pct_oi=r(last_n / last_oi * 100, 1),
+                chg_1w=int(last_n - nets[-2]), chg_4w=int(last_n - nets[-5]) if len(nets) > 5 else None,
+                pct3y=pct, min3y=int(min(nets)), max3y=int(max(nets)), weeks=len(nets),
+                zone=zone, stance=stance, note=note,
+                spark=[int(n) for n in nets[-52:]], spark_dates=[d for d, _, _ in rows[-52:]])
+
+
 def calendar_moves(rows):
     """與前一日、7 日前、30 日前（日曆天，取當天或之前最近一筆）比較。"""
     if not rows:
@@ -699,6 +774,7 @@ def main():
     markets = []
     st_by_id = {}
     gold_moves = None
+    gold_tech = None
     for s in MARKET_SERIES:
         try:
             rows = fetch_yahoo(s["id"], s.get("rng", "6mo"), seed) if s["src"] == "yahoo" else fetch_fred(s["id"], start_daily, seed)
@@ -711,6 +787,7 @@ def main():
         st_by_id[s["id"]] = st
         if s["id"] == "GC=F":
             gold_moves = calendar_moves(rows)
+            gold_tech = technicals(rows)
         markets.append(dict(id=s["id"], name=s["name"], unit=s["unit"], source=s["src"], stats=st))
 
     aux = {}
@@ -759,6 +836,13 @@ def main():
     verdict = build_verdict_total(categories)
     verdict["regime"] = regime
     nxt, upcoming = next_event(now_tpe)
+    try:
+        cot = fetch_cot(seed)
+    except Exception as e:  # noqa: BLE001
+        errors.append(f"CFTC COT: {e}")
+        cot = None
+    sp = DATA_DIR / "structural.json"
+    structural = json.loads(sp.read_text(encoding="utf-8")) if sp.exists() else None
     fed_item = pool.get("FEDX")
     dxy = dxy_context(st_by_id.get("DX-Y.NYB"), seed)
 
@@ -774,6 +858,9 @@ def main():
         categories=categories,
         fed_item=fed_item,
         gold_moves=gold_moves,
+        gold_tech=gold_tech,
+        cot=cot,
+        structural=structural,
         dxy=dxy,
         econ=econ,
         markets=markets,
