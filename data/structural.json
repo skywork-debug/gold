@@ -1,0 +1,18 @@
+{
+ "_說明": "結構面背景（手動更新）。WGC《Gold Demand Trends》約在每季結束後一個月公布（1、4、7、10 月底）。過了 stale_after 日期，網頁會自動顯示「待更新」提醒；更新數字後，把 as_of、next_release、stale_after 一起往後改一季。不計入任何分數。",
+ "central_banks": {
+  "as_of": "2026 Q2",
+  "next_release": "2026 年 10 月底（Q3 報告）",
+  "stale_after": "2026-11-05",
+  "headline": "央行持續買金，是近年金價的長線支撐",
+  "points": [
+   "2026 Q2 全球央行淨買入 289 公噸，年增 62%",
+   "上半年合計 345 公噸，是 2022 年以來上半年最少，Q1 放緩是主因",
+   "今年最大買家：波蘭 82 公噸、中國 40 公噸；最大賣家：俄羅斯（Q2 賣出 22 公噸）",
+   "WGC 央行調查：89% 受訪央行預期未來一年全球央行黃金儲備會增加"
+  ],
+  "why": "央行買金看的是去美元化與分散儲備，不太受利率影響，所以 2022–2024 年利率很高時金價仍大漲。總經偏空時，這股買盤常在回檔時承接。",
+  "source": "World Gold Council, Gold Demand Trends Q2 2026",
+  "url": "https://www.gold.org/goldhub/research/gold-demand-trends/gold-demand-trends-q2-2026/central-banks"
+ }
+}
