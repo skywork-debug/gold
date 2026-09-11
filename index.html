@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GOLD 黃金觀測室</title>
+<title>GOLD 黃金觀測站</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -27,8 +27,8 @@ button{font-family:inherit}
 /* top */
 .top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:10px}
-.brand .g{font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:.18em;color:var(--gold)}
-.brand .n{font-weight:900;font-size:20px;color:var(--ink)}
+.brand .g{font-family:var(--mono);font-weight:600;font-size:24.2px;letter-spacing:.18em;color:var(--gold)}
+.brand .n{font-weight:900;font-size:22px;color:var(--ink)}
 .nav{display:flex;gap:6px;flex-wrap:wrap}
 .nav a,.nav button{border:1px solid var(--line2);background:rgba(255,255,255,.02);color:var(--body);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none}
 .nav a:hover,.nav button:hover{border-color:var(--gold);color:var(--gold)}
@@ -121,10 +121,25 @@ button{font-family:inherit}
 .cond.bull .h{color:var(--bull)} .cond.bear .h{color:var(--bear)}
 .cond p{margin:0;font-size:14px;color:var(--ink)}
 /* scoreboard */
+.catd{background:var(--panel);border:1px solid var(--line);border-radius:18px;margin-bottom:10px;scroll-margin-top:16px;overflow:hidden}
+.catd[open]{border-color:var(--line2)}
+.catd>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;padding:12px 18px;flex-wrap:wrap}
+.catd>summary::-webkit-details-marker{display:none}
+.catd>summary:hover{background:var(--panel2)}
+.catd .chev{margin-left:auto;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.catd .chev::after{content:"展開 ▾"}
+.catd[open] .chev::after{content:"收合 ▴"}
+.catd .body{padding:4px 18px 18px}
+.catd .sumsc{font-family:var(--mono);font-weight:600;font-size:18px;min-width:52px;text-align:right}
+.catd .bar{width:120px;height:8px;border-radius:4px;background:var(--line2);position:relative}
+.catd .bar i{position:absolute;top:-3px;width:4px;height:14px;border-radius:2px}
+.catd .bar b{position:absolute;left:50%;top:-2px;width:1px;height:12px;background:var(--muted)}
+.wt{font-size:11px;border-radius:999px;padding:1px 8px;background:var(--gold-dim);color:var(--gold2);font-weight:700}
+.ref .meter i{opacity:.35}
 .board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:6px 0 18px}
 @media(max-width:1000px){.board{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.board{grid-template-columns:repeat(2,1fr)}}
-.bd{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;display:block}
+.bd{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;display:block;font:inherit;width:100%}
 .bd:hover{border-color:var(--gold)}
 .bd .nm{font-weight:900;color:var(--ink);font-size:15px}
 .bd .lb{font-size:12px;font-weight:700}
@@ -171,8 +186,8 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
 <body>
 <div class="wrap">
 <div class="top">
-  <div class="brand"><span class="g">GOLD</span><span class="n">黃金觀測室</span></div>
-  <div class="nav"><a href="#s1">今日結論</a><a href="#s2">四個推力</a><a href="#s3">30 天內數據</a><a href="#s4">加減分儀表板</a><button onclick="openModal('src')">資料來源</button><button onclick="openModal('rules')">判讀規則</button></div>
+  <div class="brand"><span class="g">GOLD</span><span class="n">黃金觀測站</span></div>
+  <div class="nav"><a href="#s1">今日結論</a><a href="#s2">加減分儀表板</a><a href="#s3">關鍵圖</a><a href="#s4">30 天內數據</a><button onclick="openModal('src')">資料來源</button><button onclick="openModal('rules')">判讀規則</button></div>
 </div>
 <div id="err" class="errbox" style="display:none"></div>
 
@@ -188,36 +203,34 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
   </div>
   <div class="card call">
     <div class="eyebrow">01 · 今日結論</div>
-    <h2>總經環境站在黃金這邊嗎？</h2>
+    <h2>總經環境讓黃金偏多還是偏空？</h2>
     <div class="verdict">
-      <svg viewBox="0 0 190 128" width="190" height="128" id="gauge" role="img" aria-label="四推力合計儀表"></svg>
-      <div><div class="fine">四推力合計（−4 到 +4）</div><div class="big neutral" id="v-label">載入中…</div></div>
+      <svg viewBox="0 0 190 128" width="190" height="128" id="gauge" role="img" aria-label="加減分總分儀表"></svg>
+      <div><div class="fine" id="v-sub">加減分總分</div><div class="big neutral" id="v-label">載入中…</div></div>
     </div>
     <div class="chips4" id="chips4"></div>
-    <div class="fine">規則式判讀，只描述總經背景，不是價格預測，也不是投資建議。</div>
+    <div class="fine">多空雙向判讀：只描述總經環境偏向哪一邊，不是價格預測，也不是投資建議。</div>
   </div>
 </div>
 <div class="meta"><span id="meta-left"></span><span id="meta-right"></span></div>
 
-<!-- PILLARS -->
-<div class="sh" id="s2"><span class="k">02</span><h2>拆解四個推力</h2><span class="d">四燈都亮綠，黃金的順風才算完整</span></div>
-<p class="lead">黃金不付利息，它的漲跌來自「別的資產變得多沒吸引力」。看四件事：市場押不押降息、美元強不強、扣掉通膨後的利率高不高、大家怕不怕。</p>
-<div class="signals" id="signals"></div>
+<!-- SCOREBOARD -->
+<div class="sh" id="s2"><span class="k">02</span><h2>黃金加減分儀表板</h2><span class="d">每類 −2（強烈偏空）到 +2（強烈偏多）</span></div>
+<p class="lead">指針偏右＝這一類數據讓黃金偏多，偏左＝偏空，停在中間＝多空拉鋸。點任一儀表或下方標題展開細項，點指標名稱看白話解釋與完整走勢。</p>
+<div class="board" id="board"></div>
+<div id="cats"></div>
+
+<!-- KEY CHARTS -->
+<div class="sh" id="s3" style="margin-top:34px"><span class="k">03</span><h2>兩張關鍵圖</h2><span class="d">利率往哪走、美元強不強</span></div>
 <div class="pair">
   <div class="card vis"><h3>降息預期路徑</h3><div class="sub2">期貨價格反推：市場認為利率接下來會走到哪</div><div id="fedpath"></div><div class="kv" id="fedkv"></div></div>
   <div class="card vis"><h3>美元指數 DXY 強弱尺</h3><div class="sub2" id="dxysub">以 1973 年基期 100 為中線的市場慣用區間</div><div id="dxyruler"></div><div class="kv" id="dxykv"></div></div>
 </div>
 
 <!-- TIMELINE -->
-<div class="sh" id="s3"><span class="k">03</span><h2>30 天內要盯的數據</h2><span class="d">點任一事件，看它怎麼影響黃金</span></div>
+<div class="sh" id="s4"><span class="k">04</span><h2>30 天內要盯的數據</h2><span class="d">點任一事件，看它怎麼影響黃金</span></div>
 <div class="tlbar" id="tlbar"></div>
 <div class="tl"><div class="list" id="evlist"></div><div class="detail" id="evdetail"></div></div>
-
-<!-- SCOREBOARD -->
-<div class="sh" id="s4"><span class="k">04</span><h2>黃金加減分儀表板</h2><span class="d">五大類、每個指標都給分：+2 強力支持 … −2 強力壓力</span></div>
-<p class="lead">指針偏右＝這一類數據對黃金有利，偏左＝不利。點上方任一儀表跳到該類，點指標名稱看白話解釋與完整走勢。</p>
-<div class="board" id="board"></div>
-<div id="cats"></div>
 
 <footer>資料：FRED（聖路易聯準銀行）、Yahoo Finance（COMEX 黃金期貨、ICE 美元指數、CME 聯邦基金期貨）、TradingView × Pepperstone 即時報價、BLS／BEA／Fed 公布時間表。<br>本站為教育用途的總經背景整理，不構成投資建議；資料以官方公布為準。</footer>
 </div>
@@ -243,16 +256,16 @@ const DICT = {
  DFII10:{t:"10 年期實質殖利率",intro:"美國 10 年期抗通膨公債（TIPS）的殖利率，等於「名目利率扣掉通膨預期」，代表持有美債真正的購買力報酬。",ex:"名目殖利率 4.8%、通膨預期 2.4%，實質殖利率約 2.4%。",gold:"黃金不付利息，實質利率越高，抱黃金的機會成本越大，金價通常承壓；實質利率下降則是黃金最重要的利多。"},
  DGS10:{t:"10 年期美債殖利率",intro:"美國政府 10 年期公債的年化報酬率，是全球長期利率的基準。",ex:"殖利率從 4.6% 升到 4.8%，代表債券價格下跌、市場要求更高的利息。",gold:"名目殖利率上升通常帶動美元走強、實質利率上升，對黃金不利；反之有利。"},
  DGS2:{t:"2 年期美債殖利率",intro:"美國 2 年期公債殖利率，對聯準會未來一兩年的政策利率最敏感。",ex:"2 年期殖利率明顯高於目前聯邦基金利率，代表市場認為之後利率會更高。",gold:"它是降息預期的即時溫度計：2 年期往下掉，就是市場在押降息，對黃金有利。"},
- T10YIE:{t:"10 年期通膨預期（損益兩平通膨率）",intro:"名目公債殖利率減去 TIPS 殖利率，等於市場預期未來 10 年的平均通膨。",ex:"損益兩平通膨率 2.37%，代表市場預期未來十年通膨平均約 2.4%。",gold:"通膨預期上升而名目利率不動，實質利率就下降，對黃金有利；黃金也常被視為抗通膨資產。"},
+ T10YIE:{t:"10 年期通膨預期（損益兩平通膨率）",intro:"名目公債殖利率減去 TIPS 殖利率，等於市場預期未來 10 年的平均通膨。",ex:"損益兩平通膨率 2.37%，代表市場預期未來十年通膨平均約 2.4%。",gold:"要看利率環境：市場押降息時，通膨預期上升會壓低實質利率，偏多；市場押升息時，通膨預期上升會讓聯準會更鷹，偏空。"},
  DTWEXBGS:{t:"廣義美元指數",intro:"聯準會編製的貿易加權美元指數，衡量美元對 26 個主要貿易夥伴貨幣的強弱，比只偏重歐元的 DXY 更全面。",ex:"指數從 119 降到 118，代表美元對主要貨幣整體貶值。",gold:"意義同 DXY：美元越弱，黃金越容易撐住。兩者同方向時訊號更可靠。"},
- DCOILWTICO:{t:"WTI 原油",intro:"美國西德州中級原油現貨價格，是美國油價的基準。",ex:"油價從 80 漲到 90 美元，運輸、製造成本都會上升。",gold:"油價上漲會推高通膨預期，也常伴隨地緣風險，兩者都讓資金找黃金避險。但油價高到逼聯準會維持高利率時，反而不利。"},
+ DCOILWTICO:{t:"WTI 原油",intro:"美國西德州中級原油現貨價格，是美國油價的基準。",ex:"油價從 80 漲到 90 美元，運輸、製造成本都會上升。",gold:"油價對黃金有兩條相反的路：一是地緣風險與抗通膨避險（偏多），二是推升通膨、逼聯準會升息、美元走強（偏空）。哪條占上風看利率環境：市場押升息時第二條通常更強，所以本站在押升息環境把油價上漲算成偏空。"},
  DCOILBRENTEU:{t:"布蘭特原油",intro:"歐洲北海布蘭特原油價格，是國際油價的基準。",ex:"中東局勢緊張時，布蘭特通常比 WTI 反應更大。",gold:"意義同 WTI：反映通膨與地緣風險的溫度。"},
  VIXCLS:{t:"VIX 恐慌指數",intro:"由 S&P 500 選擇權推算的預期波動率，市場越害怕、數字越高。",ex:"VIX 在 15 以下代表市場平靜；20 以上開始緊張；超過 30 代表恐慌。",gold:"市場恐慌時資金湧向避險資產，黃金常受惠；不過極端崩盤初期，黃金也可能被拋售換現金。"},
  BAMLH0A0HYM2:{t:"高收益債信用利差",intro:"美國高收益（垃圾）公司債殖利率減去同天期公債殖利率，反映市場對企業違約的擔心。",ex:"利差從 2.6% 擴大到 3.5%，代表投資人要求更高的風險補償。",gold:"利差擴大＝資金環境變緊、風險意識升高，通常伴隨降息預期與避險需求，對黃金偏正面。"},
  CPIAUCSL:{t:"CPI 整體物價",intro:"消費者物價指數，衡量一般家庭購買商品與服務的價格變化，是最常被引用的通膨指標。",ex:"月增 0.3%，年化約 3.7%，高於聯準會 2% 的目標。",gold:"通膨高於預期→聯準會不敢降息→實質利率與美元走強→黃金承壓；通膨降溫則相反。"},
- CPILFESL:{t:"核心 CPI",intro:"扣除食品與能源的 CPI，波動較小，更能看出通膨的趨勢。",ex:"整體 CPI 因油價大漲，但核心 CPI 平穩，聯準會會比較看核心。",gold:"核心通膨放緩是「降息空間變大」的前提，對黃金有利。"},
+ CPILFESL:{t:"核心 CPI",intro:"扣除食品與能源的 CPI，波動較小，更能看出通膨的趨勢。",ex:"整體 CPI 因油價大漲，但核心 CPI 平穩，聯準會會比較看核心。",gold:"核心通膨越高於目標，聯準會越可能升息或延後降息，美元與實質利率走強，黃金偏空；回到 2% 附近才有降息空間，黃金偏多。"},
  PCEPI:{t:"PCE 整體物價",intro:"個人消費支出物價指數，涵蓋範圍比 CPI 廣，是聯準會官方的通膨目標指標。",ex:"聯準會說的「通膨 2% 目標」指的就是 PCE。",gold:"同 CPI 邏輯，但對聯準會決策的影響更直接。"},
- PCEPILFE:{t:"核心 PCE",intro:"扣除食品與能源的 PCE，聯準會最看重的單一通膨數字。",ex:"核心 PCE 三個月年化降到 2% 附近，就是聯準會敢降息的訊號。",gold:"核心 PCE 放緩→降息預期升溫→實質利率下降→黃金利多。"},
+ PCEPILFE:{t:"核心 PCE",intro:"扣除食品與能源的 PCE，聯準會最看重的單一通膨數字。",ex:"核心 PCE 三個月年化降到 2% 附近，就是聯準會敢降息的訊號。",gold:"核心 PCE 是聯準會最看重的通膨數字：明顯高於 2% → 升息壓力 → 黃金偏空；回到 2% 附近 → 降息空間 → 黃金偏多。"},
  PPIFIS:{t:"PPI 最終需求",intro:"生產者物價指數，衡量企業出廠價格的變化，通常領先 CPI。",ex:"PPI 連續上漲，幾個月後 CPI 也可能跟著升。",gold:"上游漲價壓力減輕，代表通膨會繼續降溫，有利降息預期與黃金。"},
  PAYEMS:{t:"非農新增就業",intro:"美國每月新增的非農業就業人數（千人），是最重要的景氣指標之一。",ex:"新增 162 千人代表就業穩健；接近 0 或負值代表勞動市場轉弱。",gold:"就業轉弱→聯準會被迫降息→黃金利多；就業太強則降息預期降溫。"},
  UNRATE:{t:"失業率",intro:"失業人口占勞動力的比率。",ex:"失業率從 4.1% 快速升到 4.5%，常是衰退的早期警訊。",gold:"失業率上升通常伴隨降息與避險需求，對黃金有利。"},
@@ -285,13 +298,14 @@ function gaugeSVG(score,max,{w=190,h=128,label=true,big=true}={}){
   const [ex,ey]=[cx-(r-16)*Math.cos(a),cy-(r-16)*Math.sin(a)];
   s+=`<line x1="${cx}" y1="${cy}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="${col}" stroke-width="3.5" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="6" fill="${col}"/>`;
   if(label){s+=`<text x="${cx-r}" y="${cy+14}" text-anchor="middle" font-size="10" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">−${max}</text><text x="${cx+r}" y="${cy+14}" text-anchor="middle" font-size="10" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">+${max}</text>`}
-  s+=`<text x="${cx}" y="${h-3}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="${col}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${score>0?"+":""}${score}</text>`;
+  s+=`<text x="${cx}" y="${h-3}" text-anchor="middle" font-size="${fs}" font-weight="600" fill="${col}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${score>0?"+":""}${Number.isInteger(score)?score:score.toFixed(1)}</text>`;
   return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="分數 ${score}／${max}">${s}</svg>`;
 }
 function meter(score){
+  if(score==null) return `<div class="meter">${"<i></i>".repeat(5)}</div><div class="meter-l"><span class="fine">−2</span><span class="sc" style="color:var(--muted)">參考指標・不計分</span><span class="fine">+2</span></div>`;
   const cls=["b2","b1","n","g1","g2"], idx=score+2;
   const cells=[0,1,2,3,4].map(i=>`<i class="${i===idx?cls[i]:""}"></i>`).join("");
-  const txt=score>=2?"強力支持黃金":score===1?"支持黃金":score===0?"中性":score===-1?"壓力":"強力壓力";
+  const txt=score>=2?"強烈偏多":score===1?"偏多":score===0?"中性":score===-1?"偏空":"強烈偏空";
   return `<div class="meter">${cells}</div><div class="meter-l"><span class="fine">−2</span><span class="sc" style="color:${colOf(score)}">${score>0?"+":""}${score} · ${txt}</span><span class="fine">+2</span></div>`;
 }
 
@@ -299,27 +313,26 @@ let DATA=null, curEv=0;
 function render(d){
   DATA=d;
   if(d.errors&&d.errors.length){const e=document.getElementById("err");e.style.display="block";e.textContent="部分來源暫時無法更新，保留上次資料："+d.errors.join("；");}
-  // hero: price moves
-  const g=(d.markets||[]).find(m=>m.id==="GC=F");
-  if(g&&g.stats){const s=g.stats; document.getElementById("gdate").textContent=`${s.latest_date} 收 ${fmt(s.latest,1)}`;
-    const p1=s.prev?(s.latest/s.prev-1)*100:null;
-    const mv=[["與前一日",p1==null?null:(p1>=0?"+":"")+p1.toFixed(2)+"%",s.chg||""],["5 日",s.chg5_pct,s.chg5||""],["20 日",s.chg20_pct,s.chg20||""]];
-    document.getElementById("moves").innerHTML=mv.map(([k,v,sub])=>{const dd=dir(v);const ar=dd==="up"?"▲":dd==="dn"?"▼":"■";return `<div class="mv ${dd}"><div class="k">${k}</div><div class="v"><span style="font-size:.6em">${ar}</span>${v||"—"}</div><div class="s">${sub}</div></div>`}).join("");}
-  // verdict
-  const v=d.verdict;
-  document.getElementById("gauge").outerHTML=gaugeSVG(v.score,4);
+  // hero: price moves（與前一日／7 日／30 日）
+  const gm=d.gold_moves;
+  if(gm){ document.getElementById("gdate").textContent=`${gm.date} 收 ${fmt(gm.close,1)}`;
+    const mv=[["與前一日",gm.d1],["7 日",gm.d7],["30 日",gm.d30]];
+    document.getElementById("moves").innerHTML=mv.map(([k,o])=>{if(!o)return `<div class="mv"><div class="k">${k}</div><div class="v">—</div></div>`;
+      const dd=o.pct>0?"up":o.pct<0?"dn":"fl";const ar=dd==="up"?"▲":dd==="dn"?"▼":"■";
+      return `<div class="mv ${dd}"><div class="k">${k}</div><div class="v"><span style="font-size:.6em">${ar}</span>${o.pct>0?"+":""}${fmt(o.pct,2)}%</div><div class="s">${o.abs>0?"+":""}${fmt(o.abs,1)} 美元</div></div>`}).join("");}
+  // verdict：加減分總分
+  const v=d.verdict, mx=v.max||12;
+  document.getElementById("gauge").outerHTML=gaugeSVG(v.score,mx).replace("<svg ",'<svg id="gauge" ');
   const vl=document.getElementById("v-label"); vl.className="big "+v.stance; vl.textContent=v.label;
-  document.getElementById("chips4").innerHTML=d.pillars.map(p=>{const c=p.score>0?"bgb":p.score<0?"bgr":"bgn";return `<div class="c4"><div class="dot ${c}">${p.score>0?"+1":p.score<0?"−1":"0"}</div><div class="t">${p.title}<small>${p.question.replace("？","")}</small></div></div>`}).join("");
+  document.getElementById("v-sub").textContent=`加減分總分 ${v.score>0?"+":""}${fmt(v.score,1)}（−${mx} 到 +${mx}，利率類 ×2）`;
+  document.getElementById("chips4").innerHTML=(d.categories||[]).map(c=>{const k=c.score>=0.5?"bgb":c.score<=-0.5?"bgr":"bgn";const w=c.score>=0.5?"偏多":c.score<=-0.5?"偏空":"中性";
+    return `<div class="c4" style="cursor:pointer" onclick="openCat('${c.key}')"><div class="dot ${k}" style="width:auto;padding:0 6px;min-width:40px">${c.score>0?"+":""}${fmt(c.score,1)}</div><div class="t">${c.name}${c.weight>1?' <span class="wt">×'+c.weight+'</span>':''}<small>${w}</small></div></div>`}).join("")+
+    `<div class="fine" style="grid-column:1/-1">${v.detail}</div>`;
   document.getElementById("meta-left").textContent=`${d.count} 項資料 · 更新 ${d.generated_at_tpe} 台灣時間`;
   document.getElementById("meta-right").textContent=d.mode==="live"?"每日 08:30／21:30 自動更新":"目前為已保存資料";
-  // pillars
-  document.getElementById("signals").innerHTML=d.pillars.map(p=>{const st=stanceOf(p.score);return `<div class="sig">
-    <div><div class="q">${p.question}</div><div class="why">${p.why.replace("為什麼看：","")}</div></div>
-    <div><div class="track"><i class="${p.score<0?"on bear":""}"></i><i class="${p.score===0?"on neutral":""}"></i><i class="${p.score>0?"on bull":""}"></i></div><div class="track-l"><span>壓力</span><span>中性</span><span>支持</span></div></div>
-    <div class="ev"><div class="st ${st}">${p.title}${p.score>0?" · +1":p.score<0?" · −1":" · 0"}</div>${p.evidence||"—"}<div class="links">${p.links.map(id=>`<button class="tag" onclick="openInd('${id}')">${(DICT[id]||{}).t||id}</button>`).join("")}</div></div></div>`}).join("");
   renderFedPath(d.fed); renderDXY(d.dxy);
-  renderTimeline(); renderEvents();
   renderBoard();
+  renderTimeline(); renderEvents();
 }
 function renderFedPath(f){
   const el=document.getElementById("fedpath"); if(!f||f.target_mid==null){el.innerHTML='<div class="fine">無資料</div>';return}
@@ -339,7 +352,7 @@ function renderFedPath(f){
   document.getElementById("fedkv").innerHTML=`<div>聯準會目標區間<b>${f.target_range||"—"}</b></div>`+(h?`<div>市場押到年底<b style="color:${h.vs_now_bp>=25?C.bear:h.vs_now_bp<=-25?C.bull:C.gold2}">${h.vs_now_bp>0?"升息":"降息"}約 ${Math.abs(Math.round(h.vs_now_bp/25))} 碼</b></div>`:"")+`<div>虛線<b style="font-size:13px;font-family:inherit;color:var(--body)">＝目前利率；線往上＝押升息（黃金壓力）</b></div>`;
 }
 function renderDXY(x){
-  const el=document.getElementById("dxyruler"); if(!x){el.innerHTML='<div class="fine">無資料</div>';return}
+  const el=document.getElementById("dxyruler"); if(!x){el.innerHTML='<div class="fine">資料尚未產生：到 GitHub Actions 按一次 Run workflow，跑完約 1～2 分鐘後重新整理</div>';return}
   const W=520,H=150,pl=16,pr=16,lo=85,hi=115, X=v=>pl+(Math.max(lo,Math.min(hi,v))-lo)/(hi-lo)*(W-pl-pr);
   const cols=["rgba(60,198,180,.55)","rgba(60,198,180,.28)","rgba(224,176,79,.3)","rgba(239,107,115,.28)","rgba(239,107,115,.55)"];
   let s=""; const y0=58,bh=26;
@@ -376,19 +389,26 @@ function renderEvents(){
   document.getElementById("evdetail").innerHTML=`<h3>${n.name}<span style="font-size:14px;color:var(--muted);font-weight:400;margin-left:8px">${n.period||""}</span></h3>
     <div class="when">${n.date_iso} ${n.weekday} ${n.time_tpe.slice(6)} · 台灣時間</div>
     <p style="margin:0 0 14px;font-size:14px">${n.why||""}</p>
-    <div class="cond bull"><div class="h">▲ 對黃金是支持，如果…</div><p>${n.bull}</p></div>
-    <div class="cond bear"><div class="h">▼ 對黃金是壓力，如果…</div><p>${n.bear}</p></div>
+    <div class="cond bull"><div class="h">▲ 黃金偏多情境：如果…</div><p>${n.bull}</p></div>
+    <div class="cond bear"><div class="h">▼ 黃金偏空情境：如果…</div><p>${n.bear}</p></div>
     <div class="fine">以上是觀察條件，不代表已發生；市場預估值請以公布前的財經行事曆為準。</div>
     ${n.series&&DICT[n.series]?`<div style="margin-top:12px"><button class="tag" onclick="openInd('${n.series}')">看「${DICT[n.series].t}」的白話說明與走勢</button></div>`:""}`;
 }
 function itemById(id){ if(id==="FEDX") return DATA.fed_item; return [...(DATA.econ||[]),...(DATA.markets||[])].find(x=>x.id===id); }
+function openCat(key){const el=document.getElementById("cat-"+key); if(!el) return; el.open=true; el.scrollIntoView({behavior:"smooth",block:"start"});}
+function scoreBar(sc){const x=(Math.max(-2,Math.min(2,sc))+2)/4*100;return `<span class="bar"><b></b><i style="left:calc(${x}% - 2px);background:${colOf(sc>=0.5?1:sc<=-0.5?-1:0)}"></i></span>`}
 function renderBoard(){
   const cats=DATA.categories||[];
-  document.getElementById("board").innerHTML=cats.map(c=>{const ratio=c.score/c.max;const lb=ratio>=0.2?"偏向支持":ratio<=-0.2?"偏向壓力":"中性";return `<a class="bd" href="#cat-${c.key}"><div class="nm">${c.name}</div>${gaugeSVG(c.score,c.max,{w:170,h:112,big:false})}<div class="lb" style="color:${ratio>=0.2?C.bull:ratio<=-0.2?C.bear:C.gold2}">${lb}</div></a>`}).join("");
+  if(!cats.length){document.getElementById("board").innerHTML='<div class="fine">資料尚未產生：到 GitHub Actions 按一次 Run workflow，跑完約 1～2 分鐘後重新整理</div>';document.getElementById("cats").innerHTML="";return}
+  document.getElementById("board").innerHTML=cats.map(c=>{const lb=c.score>=0.5?"偏多":c.score<=-0.5?"偏空":"多空拉鋸";const col=c.score>=0.5?C.bull:c.score<=-0.5?C.bear:C.gold2;
+    return `<button class="bd" onclick="openCat('${c.key}')"><div class="nm">${c.name}${c.weight>1?' <span class="wt">×'+c.weight+'</span>':''}</div>${gaugeSVG(c.score,2,{w:170,h:112,big:false})}<div class="lb" style="color:${col}">${lb}</div></button>`}).join("");
   document.getElementById("cats").innerHTML=cats.map(c=>{
     const items=c.ids.map(itemById).filter(Boolean);
-    return `<section class="cat" id="cat-${c.key}"><div class="cat-h"><div class="ic">${c.icon}</div><div><h3>${c.name}</h3><div class="ds">${c.desc}</div></div><div class="tot"><span class="fine">本類合計</span>${gaugeSVG(c.score,c.max,{w:130,h:96,label:false,big:false})}</div></div>
-    <div class="items">${items.map(card).join("")}</div></section>`}).join("");
+    const col=c.score>=0.5?C.bull:c.score<=-0.5?C.bear:C.gold2;
+    return `<details class="catd" id="cat-${c.key}"><summary><div class="ic" style="width:34px;height:34px;border-radius:10px;background:var(--gold-dim);color:var(--gold);display:grid;place-items:center;font-weight:900;font-family:var(--mono)">${c.icon}</div>
+      <div style="min-width:0;flex:1 1 260px"><div style="font-weight:900;color:var(--ink);font-size:17px">${c.name}${c.weight>1?' <span class="wt">主軸 ×'+c.weight+'</span>':''}</div><div class="fine">${c.desc}</div></div>
+      ${scoreBar(c.score)}<span class="sumsc" style="color:${col}">${c.score>0?"+":""}${fmt(c.score,1)}</span><span class="chev"></span></summary>
+      <div class="body"><div class="fine" style="margin-bottom:10px">本類分數＝計分指標的平均（${c.n_scored} 項計分，其餘為參考）</div><div class="items">${items.map(card).join("")}</div></div></details>`}).join("");
 }
 function card(it){
   const s=it.stats||{}, dec=decOf(it.id);
@@ -399,11 +419,11 @@ function card(it){
   else if(isEcon){pills=`<span class="pill">與前期 ${arrow(s.chg)}${s.chg||"—"}</span>`+(it.ann3m!=null?`<span class="pill fl">3M 年化 ${fmt(it.ann3m,1)}%</span>`:"")+(it.yoy!=null?`<span class="pill fl">年增 ${fmt(it.yoy,1)}%</span>`:"")}
   else {pills=`<span class="pill">1 日 ${arrow(s.chg)}${s.chg||"—"}</span><span class="pill">20 日 ${arrow(s.chg20)}${s.chg20_pct||s.chg20||"—"}</span>`}
   const sp=s.spark?sparkSVG(s.spark):"";
-  return `<div class="it"><div class="top1"><div class="nm" onclick="openInd('${it.id}')">${it.name} ›</div></div>
+  return `<div class="it${it.gold_score==null?" ref":""}"><div class="top1"><div class="nm" onclick="openInd('${it.id}')">${it.name} ›</div></div>
    <div class="val"><b>${fmt(s.latest,dec)}</b><span>${sub}</span></div>
    <div style="display:flex;gap:6px;flex-wrap:wrap">${pills}</div>
    ${sp}
-   ${meter(it.gold_score||0)}
+   ${meter(it.gold_score)}
    <div class="why">${it.gold_reason||""}</div></div>`;
 }
 function bigChart(it){
@@ -428,7 +448,7 @@ function openInd(id){
   document.getElementById("mbox").innerHTML=`<span class="x" onclick="closeModal()">✕</span><h3>${info.t}</h3>
    ${s?`<div class="fine">${it.unit} · 最新 ${s.latest_date||it.period||""}：<b style="color:var(--gold2);font-family:var(--mono)">${fmt(s.latest,decOf(id))}</b>${s.chg?`（${s.chg}）`:""}</div>`:""}
    ${it?bigChart(it):""}
-   ${it&&it.gold_score!=null?`<div style="margin-top:10px">${meter(it.gold_score)}<div class="fine" style="margin-top:2px">${it.gold_reason||""}</div></div>`:""}
+   ${it?`<div style="margin-top:10px">${meter(it.gold_score)}<div class="fine" style="margin-top:2px">${it.gold_reason||""}</div></div>`:""}
    <h5>白話介紹</h5><p>${info.intro}</p><h5>舉例</h5><p>${info.ex}</p><h5>對黃金的意義</h5><p>${info.gold}</p>`;
   document.getElementById("modal").classList.add("on");
 }
@@ -440,8 +460,14 @@ function openModal(k){
    <h5>公布時間表</h5><p>BLS（CPI／PPI／非農）、BEA（PCE）、聯準會（FOMC），存於 data/calendar.json，只顯示 30 天內。</p>
    <h5>更新方式</h5><p>GitHub Actions 每日台灣時間 08:30 與 21:30 自動抓取並重新判讀。</p>`
   :`<span class="x" onclick="closeModal()">✕</span><h3>判讀規則（規則式，不用 AI）</h3>
-   <h5>今日結論（四個推力）</h5><p>各給 +1／0／−1，加總 ≥ +2 順風、≤ −2 逆風、其餘中性。① 降息預期：期貨隱含年底利率比現在低 25 bp 以上 +1、高 25 bp 以上 −1。② 美元：DXY 20 日跌 ≥ 0.5% +1、漲 ≥ 0.5% −1。③ 實質利率：10 年期 TIPS 20 日降 ≥ 10 bp +1、升 ≥ 10 bp −1。④ 避險：油價 20 日漲 ≥ 5%、VIX ≥ 20、信用利差 20 日擴大 ≥ 20 bp，兩票以上同向才計分。</p>
-   <h5>加減分儀表板（每個指標 −2～+2）</h5><p>物價類：近 3 個月年化比年增率低 0.5 個百分點以上 +1、低 1.5 以上 +2（通膨降溫＝降息空間），反向為負。非農：近 3 個月平均新增 &lt;100 千人 +1、&lt;50 +2，&gt;175 −1、&gt;250 −2。失業率：比近 12 個月低點高 0.3 +1、0.5 +2。殖利率：20 日降 8 bp +1、20 bp +2（實質殖利率門檻 10／25 bp），反向為負。通膨預期：20 日升 8 bp +1、20 bp +2。美元：20 日跌 0.5% +1、1.5% +2。油價：約 1 個月漲 5% +1、10% +2。VIX：≥20 +1、≥25 +2、≤13 −1。信用利差：20 日擴大 20 bp +1、50 bp +2。</p>
+   <h5>核心邏輯</h5><p>聯準會看通膨與就業來決定利率，利率與美元再決定黃金。所以「利率與降息預期」是主軸（權重 ×2），其他類別用來解釋利率為什麼會這樣走。多空雙向：偏多與偏空都是可交易的方向。</p>
+   <h5>總分與結論</h5><p>每類分數＝該類計分指標的平均（−2～+2），總分＝利率類 ×2＋美元＋通膨＋就業＋避險能源，範圍 −12～+12。≥ +6 強烈偏多、≥ +3 偏多、+1～+3 略偏多、−1～+1 多空拉鋸偏盤整、−3～−1 略偏空、≤ −3 偏空、≤ −6 強烈偏空。</p>
+   <h5>利率環境（決定油價與通膨預期的方向）</h5><p>期貨隱含年底利率比現在高 25 bp 以上＝押升息環境；低 25 bp 以上＝押降息環境；其餘＝方向不明。</p>
+   <h5>各指標門檻</h5><p>降息預期：隱含年底利率比現在低 25 bp +1、50 bp +2，高則為負。2 年期殖利率：20 日降 8 bp +1、20 bp +2（實質殖利率門檻 10／25 bp），升則為負。DXY：20 日跌 0.5% +1、1.5% +2，漲則為負。<br>
+   核心通膨（核心 PCE；核心 CPI 先扣 0.4 換算）：取近 3 個月年化與年增率的平均，低於 1.5% +2、1.5–2% +1、2–2.5% 0、2.5–3% −1、高於 3% −2。PPI：低於 0.5% +2、0.5–1.5% +1、1.5–2.5% 0、2.5–3.5% −1、高於 3.5% −2。通膨預期：押升息時上升算偏空、押降息時上升算偏多、方向不明不計分。<br>
+   非農：近 3 個月平均 &lt;100 千人 +1、&lt;50 +2，&gt;175 −1、&gt;250 −2。失業率：比近 12 個月低點高 0.3 +1、0.5 +2。<br>
+   VIX：≥20 +1、≥25 +2、≤13 −1。信用利差：20 日擴大 20 bp +1、50 bp +2。WTI：押升息時油價漲 5% −1、10% −2（通膨壓力）；押降息時反過來算偏多（避險）；方向不明時只有漲 10% 以上且 VIX ≥ 20 才算避險偏多。</p>
+   <h5>不計分的參考指標</h5><p>整體 CPI、整體 PCE（與核心重複）、廣義美元指數（與 DXY 重複）、布蘭特原油（與 WTI 重複）、10 年期殖利率（與 2 年期、實質殖利率重疊）。</p>
    <h5>美元指數強弱區間</h5><p>沒有官方標準。本站用市場慣用的 1973 年基期 100 為中線：&lt;90 弱勢、90–95 偏弱、95–100 中性、100–105 偏強、&gt;105 強勢；另外附上「過去 10 年百分位」與「200 日均線」兩個較客觀的參考。</p>
    <p class="fine" style="margin-top:12px">門檻寫在 scripts/fetch_data.py，可自行調整。</p>`;
   document.getElementById("mbox").innerHTML=html; document.getElementById("modal").classList.add("on");
