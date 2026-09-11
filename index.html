@@ -120,6 +120,18 @@ button{font-family:inherit}
 .cond .h{font-weight:900;font-size:14px;margin-bottom:2px}
 .cond.bull .h{color:var(--bull)} .cond.bear .h{color:var(--bear)}
 .cond p{margin:0;font-size:14px;color:var(--ink)}
+/* tech strip & layers */
+.tech{margin-top:14px;border:1px solid var(--line2);border-radius:14px;padding:12px 14px;background:rgba(0,0,0,.12)}
+.tech .tt{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.tech .tt b{color:var(--ink);font-size:14px}
+.tech svg{width:100%;height:auto;display:block;margin-top:4px}
+.layers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 10px}
+.ly{border-radius:12px;padding:8px 10px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.ly .k{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.06em}
+.ly .v{font-size:14px;font-weight:900;line-height:1.35}
+@media(max-width:520px){.layers{grid-template-columns:1fr}}
+.cb ul{margin:8px 0 0;padding-left:18px;font-size:14px;color:var(--ink)}
+.cb li{margin-bottom:4px}
 /* scoreboard */
 .catd{background:var(--panel);border:1px solid var(--line);border-radius:18px;margin-bottom:10px;scroll-margin-top:16px;overflow:hidden}
 .catd[open]{border-color:var(--line2)}
@@ -187,7 +199,7 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
 <div class="wrap">
 <div class="top">
   <div class="brand"><span class="g">GOLD</span><span class="n">黃金觀測站</span></div>
-  <div class="nav"><a href="#s1">今日結論</a><a href="#s2">加減分儀表板</a><a href="#s3">關鍵圖</a><a href="#s4">30 天內數據</a><button onclick="openModal('src')">資料來源</button><button onclick="openModal('rules')">判讀規則</button></div>
+  <div class="nav"><a href="#s1">今日結論</a><a href="#s2">加減分儀表板</a><a href="#s3">資金面</a><a href="#s3b">關鍵圖</a><a href="#s4">30 天內數據</a><button onclick="openModal('src')">資料來源</button><button onclick="openModal('rules')">判讀規則</button></div>
 </div>
 <div id="err" class="errbox" style="display:none"></div>
 
@@ -199,6 +211,7 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
     <h1>黃金現在多少錢？</h1>
     <div class="tv" id="tv-quote"></div>
     <div class="moves" id="moves"></div>
+    <div class="tech" id="tech"></div>
     <div class="foot">即時價：TradingView 載入 <b>PEPPERSTONE:XAUUSD</b>；漲跌幅以 COMEX 黃金期貨日收盤計算（<span id="gdate"></span>）</div>
   </div>
   <div class="card call">
@@ -209,6 +222,7 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
       <div><div class="fine" id="v-sub">加減分總分</div><div class="big neutral" id="v-label">載入中…</div></div>
     </div>
     <div class="chips4" id="chips4"></div>
+    <div class="layers" id="layers"></div>
     <div class="fine">多空雙向判讀：只描述總經環境偏向哪一邊，不是價格預測，也不是投資建議。</div>
   </div>
 </div>
@@ -220,15 +234,22 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
 <div class="board" id="board"></div>
 <div id="cats"></div>
 
+<!-- FLOWS -->
+<div class="sh" id="s3" style="margin-top:34px"><span class="k">03</span><h2>資金面：有沒有人在買</h2><span class="d">不計入總經分數，用來確認總經訊號</span></div>
+<div class="pair">
+  <div class="card vis"><h3>CFTC 投機資金擁擠度</h3><div class="sub2" id="cotsub">管理基金（避險基金、CTA）黃金期貨淨多單，在過去 3 年的位置</div><div id="cotbar"></div><div id="cotspark"></div><div class="kv" id="cotkv"></div></div>
+  <div class="card vis" id="cbcard"></div>
+</div>
+
 <!-- KEY CHARTS -->
-<div class="sh" id="s3" style="margin-top:34px"><span class="k">03</span><h2>兩張關鍵圖</h2><span class="d">利率往哪走、美元強不強</span></div>
+<div class="sh" id="s3b"><span class="k">04</span><h2>兩張關鍵圖</h2><span class="d">利率往哪走、美元強不強</span></div>
 <div class="pair">
   <div class="card vis"><h3>降息預期路徑</h3><div class="sub2">期貨價格反推：市場認為利率接下來會走到哪</div><div id="fedpath"></div><div class="kv" id="fedkv"></div></div>
   <div class="card vis"><h3>美元指數 DXY 強弱尺</h3><div class="sub2" id="dxysub">以 1973 年基期 100 為中線的市場慣用區間</div><div id="dxyruler"></div><div class="kv" id="dxykv"></div></div>
 </div>
 
 <!-- TIMELINE -->
-<div class="sh" id="s4"><span class="k">04</span><h2>30 天內要盯的數據</h2><span class="d">點任一事件，看它怎麼影響黃金</span></div>
+<div class="sh" id="s4"><span class="k">05</span><h2>30 天內要盯的數據</h2><span class="d">點任一事件，看它怎麼影響黃金</span></div>
 <div class="tlbar" id="tlbar"></div>
 <div class="tl"><div class="list" id="evlist"></div><div class="detail" id="evdetail"></div></div>
 
@@ -330,9 +351,49 @@ function render(d){
     `<div class="fine" style="grid-column:1/-1">${v.detail}</div>`;
   document.getElementById("meta-left").textContent=`${d.count} 項資料 · 更新 ${d.generated_at_tpe} 台灣時間`;
   document.getElementById("meta-right").textContent=d.mode==="live"?"每日 08:00／12:00／15:00／21:15／23:00 自動更新":"目前為已保存資料";
+  renderTech(d.gold_tech); renderLayers(d); renderCOT(d.cot); renderCB(d.structural);
   renderFedPath(d.fed); renderDXY(d.dxy);
   renderBoard();
   renderTimeline(); renderEvents();
+}
+function renderTech(t){
+  const el=document.getElementById("tech"); if(!t||!t.ma200){el.innerHTML='<div class="fine">技術位置：資料累積中（需 200 個交易日）</div>';return}
+  const lo=t.lo52, hi=t.hi52, W=560, H=78, pl=10, pr=10, X=v=>pl+(v-lo)/(hi-lo)*(W-pl-pr);
+  let s=`<rect x="${pl}" y="30" width="${W-pl-pr}" height="8" rx="4" fill="${C.line}"/>`;
+  s+=`<rect x="${X(t.lo20)}" y="27" width="${Math.max(3,X(t.hi20)-X(t.lo20))}" height="14" rx="4" fill="rgba(242,211,140,.18)"/>`;
+  const mk=(v,lab,col,up)=>`<line x1="${X(v)}" x2="${X(v)}" y1="22" y2="46" stroke="${col}" stroke-width="2"/><text x="${X(v)}" y="${up?16:60}" text-anchor="middle" font-size="11.5" fill="${col}" font-weight="700">${lab}</text>`;
+  s+=mk(t.ma200,"200日 "+fmt(t.ma200,0),C.bear,false)+mk(t.ma50,"50日 "+fmt(t.ma50,0),"#8fb3ff",true);
+  s+=`<circle cx="${X(t.last)}" cy="34" r="7" fill="${C.gold2}" stroke="#132a4f" stroke-width="2"/>`;
+  s+=`<text x="${pl}" y="${H-2}" font-size="11" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,monospace">52週低 ${fmt(lo,0)}</text><text x="${W-pr}" y="${H-2}" text-anchor="end" font-size="11" fill="${C.muted}" font-family="IBM Plex Mono,Menlo,monospace">52週高 ${fmt(hi,0)}</text>`;
+  const col=t.stance==="bull"?C.bull:t.stance==="bear"?C.bear:C.gold2;
+  el.innerHTML=`<div class="tt"><b>技術位置</b><span style="color:${col};font-weight:900;font-size:13px">${t.trend}</span></div>
+   <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="金價在 52 週區間的位置">${s}</svg>
+   <div class="fine">● 現價 ${fmt(t.last,1)}｜距 200 日線 ${t.vs_ma200>0?"+":""}${fmt(t.vs_ma200,1)}%、距 50 日線 ${t.vs_ma50>0?"+":""}${fmt(t.vs_ma50,1)}%｜淡金色區塊＝近 20 日高低 ${fmt(t.lo20,0)}–${fmt(t.hi20,0)}｜${t.cross}</div>`;
+}
+function renderLayers(d){
+  const el=document.getElementById("layers"); const v=d.verdict, t=d.gold_tech, c=d.cot;
+  const it=(k,txt,st)=>`<div class="ly"><div class="k">${k}</div><div class="v" style="color:${st==="bull"?C.bull:st==="bear"?C.bear:C.gold2}">${txt}</div></div>`;
+  el.innerHTML=it("① 總經方向",v.label,v.stance)+it("② 資金擁擠度",c?`${c.zone}（${c.pct3y}%）`:"—",c?c.stance:"neutral")+it("③ 技術位置",t&&t.ma200?(t.vs_ma200>0?"200 日線上方":"200 日線下方"):"—",t?t.stance:"neutral");
+}
+function renderCOT(c){
+  const el=document.getElementById("cotbar"); if(!c){el.innerHTML='<div class="fine">資料尚未產生</div>';return}
+  const W=520,H=92,pl=10,pr=10,X=p=>pl+p/100*(W-pl-pr);
+  const zones=[[0,10,"rgba(60,198,180,.55)","空擠"],[10,25,"rgba(60,198,180,.25)","多單少"],[25,75,"rgba(224,176,79,.25)","中性"],[75,90,"rgba(239,107,115,.25)","偏擁擠"],[90,100,"rgba(239,107,115,.55)","極擁擠"]];
+  let s=""; zones.forEach(([a,b,col,lab])=>{s+=`<rect x="${X(a)+1}" y="36" width="${X(b)-X(a)-2}" height="24" rx="4" fill="${col}"/><text x="${(X(a)+X(b))/2}" y="78" text-anchor="middle" font-size="11.5" fill="#c3cbdc" font-weight="700">${lab}</text>`});
+  const x=X(c.pct3y); s+=`<path d="M${x} 34 l-9 -14 h18 z" fill="${C.gold2}"/><text x="${x}" y="14" text-anchor="middle" font-size="15" font-weight="600" fill="${C.gold2}" font-family="IBM Plex Mono,Menlo,monospace">${c.pct3y}%</text>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="投機淨多單 3 年百分位">${s}</svg><div class="fine">左端＝投機客普遍看空（空方擁擠，易軋空）；右端＝多單滿載（多方擁擠，易多殺多）</div>`;
+  document.getElementById("cotsub").textContent=`${c.date} 報告：淨多單比過去 3 年 ${c.pct3y}% 的時間多 → ${c.zone}`;
+  document.getElementById("cotspark").innerHTML=`<div class="fine" style="margin-top:6px">近 52 週淨多單走勢</div>`+sparkSVG(c.spark,{w:520,h:50});
+  document.getElementById("cotkv").innerHTML=`<div>淨多單<b>${fmt(c.net/1000,1)} 千口</b></div><div>一週變化<b>${c.chg_1w>0?"+":""}${fmt(c.chg_1w/1000,1)} 千</b></div><div>占未平倉<b>${fmt(c.net_pct_oi,1)}%</b></div><div style="flex-basis:100%;font-size:13px;color:var(--body)">${c.note}。每週五公布（資料為當週二）。</div>`;
+}
+function renderCB(st){
+  const el=document.getElementById("cbcard"); const cb=st&&st.central_banks; if(!cb){el.innerHTML="";return}
+  const stale=cb.stale_after&&new Date()>new Date(cb.stale_after+"T00:00:00+08:00");
+  const badge=stale?`<div style="margin:6px 0 10px;border:1px solid rgba(239,107,115,.6);background:var(--bear-dim);color:var(--bear);border-radius:10px;padding:8px 12px;font-weight:700;font-size:13.5px">⚠ 待更新：WGC 應已公布新一季數據（目前顯示 ${cb.as_of}），請找 Claude 更新這一塊</div>`
+    :`<div class="fine" style="margin-bottom:8px">下次更新：${cb.next_release||"下一季"}</div>`;
+  el.innerHTML=`<div class="cb"><h3>央行買盤（結構面背景）${stale?' <span style="font-size:12px;background:var(--bear);color:#1a0b0d;border-radius:999px;padding:2px 10px;vertical-align:middle">待更新</span>':''}</h3><div class="sub2">${cb.as_of} · 每季手動更新 · 不計分</div>${badge}
+   <div style="font-weight:900;color:var(--gold2);font-size:16px">${cb.headline}</div><ul>${cb.points.map(x=>`<li>${x}</li>`).join("")}</ul>
+   <p class="fine" style="font-size:13px;color:var(--body);margin:8px 0 6px">${cb.why}</p><div class="fine">資料：<a href="${cb.url}" target="_blank" rel="noopener" style="color:var(--gold)">${cb.source}</a></div></div>`;
 }
 function renderFedPath(f){
   const el=document.getElementById("fedpath"); if(!f||f.target_mid==null){el.innerHTML='<div class="fine">無資料</div>';return}
@@ -467,6 +528,7 @@ function openModal(k){
    核心通膨（核心 PCE；核心 CPI 先扣 0.4 換算）：取近 3 個月年化與年增率的平均，低於 1.5% +2、1.5–2% +1、2–2.5% 0、2.5–3% −1、高於 3% −2。PPI：低於 0.5% +2、0.5–1.5% +1、1.5–2.5% 0、2.5–3.5% −1、高於 3.5% −2。通膨預期：押升息時上升算偏空、押降息時上升算偏多、方向不明不計分。<br>
    非農：近 3 個月平均 &lt;100 千人 +1、&lt;50 +2，&gt;175 −1、&gt;250 −2。失業率：比近 12 個月低點高 0.3 +1、0.5 +2。<br>
    VIX：≥20 +1、≥25 +2、≤13 −1。信用利差：20 日擴大 20 bp +1、50 bp +2。WTI：押升息時油價漲 5% −1、10% −2（通膨壓力）；押降息時反過來算偏多（避險）；方向不明時只有漲 10% 以上且 VIX ≥ 20 才算避險偏多。</p>
+   <h5>三層訊號（互相獨立，不混在一起）</h5><p>① 總經方向＝上面的加減分總分。② 資金擁擠度＝CFTC 管理基金黃金期貨淨多單在過去 3 年的百分位：≥90% 多方極度擁擠（容易多殺多）、75–90% 偏擁擠、25–75% 中性、10–25% 多單偏少、≤10% 空方極度擁擠（容易軋空）。③ 技術位置＝COMEX 黃金收盤價相對 50／200 日均線：兩條都在上方＝多頭結構、都在下方＝空頭結構、夾在中間＝反彈或回檔。三者同向時訊號最強；互相矛盾時代表方向還不明確。</p>
    <h5>不計分的參考指標</h5><p>整體 CPI、整體 PCE（與核心重複）、廣義美元指數（與 DXY 重複）、布蘭特原油（與 WTI 重複）、10 年期殖利率（與 2 年期、實質殖利率重疊）。</p>
    <h5>美元指數強弱區間</h5><p>沒有官方標準。本站用市場慣用的 1973 年基期 100 為中線：&lt;90 弱勢、90–95 偏弱、95–100 中性、100–105 偏強、&gt;105 強勢；另外附上「過去 10 年百分位」與「200 日均線」兩個較客觀的參考。</p>
    <p class="fine" style="margin-top:12px">門檻寫在 scripts/fetch_data.py，可自行調整。</p>`;
