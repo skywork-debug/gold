@@ -17,6 +17,7 @@
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--body);font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;font-size:15px;line-height:1.7}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;background:
@@ -212,7 +213,7 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
 <div id="err" class="errbox" style="display:none"></div>
 <div id="alert" class="alertbar" hidden></div>
 <div class="live">
-  <div class="live-h"><span class="eyebrow">LIVE · 即時行情</span><span class="fine">突發消息時先看這裡：市場當下怎麼反應</span></div>
+  <div class="live-h"><span class="eyebrow">LIVE · 即時行情</span><span class="fine">突發消息時先看這裡。美債看的是「價格」：價格漲＝殖利率跌（對黃金偏多）</span></div>
   <div id="tv-tickers"></div>
 </div>
 
@@ -288,11 +289,11 @@ footer{font-size:12px;color:var(--muted);margin-top:26px;line-height:1.9}
   const s=document.createElement("script"); s.async=true;
   s.src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js";
   s.innerHTML=JSON.stringify({symbols:[
-    {proName:"TVC:DXY",title:"美元指數 DXY"},
-    {proName:"TVC:US10Y",title:"美債 10 年殖利率"},
-    {proName:"TVC:US02Y",title:"美債 2 年殖利率"},
+    {proName:"PEPPERSTONE:USDX",title:"美元指數"},
+    {proName:"OANDA:USB10YUSD",title:"10 年美債價格"},
+    {proName:"OANDA:USB02YUSD",title:"2 年美債價格"},
     {proName:"TVC:USOIL",title:"WTI 原油"},
-    {proName:"TVC:VIX",title:"VIX 恐慌指數"}],
+    {proName:"PEPPERSTONE:VIX",title:"VIX 恐慌指數"}],
     colorTheme:"dark",isTransparent:true,showSymbolLogo:false,locale:"zh_TW"});
   w.appendChild(s); box.appendChild(w);
 })();
@@ -362,7 +363,7 @@ function meter(score){
 let DATA=null, curEv=0;
 function render(d){
   DATA=d;
-  if(d.errors&&d.errors.length){const e=document.getElementById("err");e.style.display="block";e.textContent="部分來源暫時無法更新，保留上次資料："+d.errors.join("；");}
+  if(d.errors&&d.errors.length){const e=document.getElementById("err");e.style.display="block";e.style.background="rgba(224,176,79,.12)";e.style.borderColor="rgba(224,176,79,.45)";e.style.color="var(--gold2)";e.textContent="ⓘ 本次更新有 "+d.errors.length+" 項來源暫時連不上，下次排程會自動重試："+d.errors.join("；");}
   // hero: price moves（與前一日／7 日／30 日）
   const gm=d.gold_moves;
   if(gm){ document.getElementById("gdate").textContent=`${gm.date} 收 ${fmt(gm.close,1)}`;
@@ -511,7 +512,7 @@ function card(it){
   else {pills=`<span class="pill">1 日 ${arrow(s.chg)}${s.chg||"—"}</span><span class="pill">20 日 ${arrow(s.chg20)}${s.chg20_pct||s.chg20||"—"}</span>`}
   const sp=s.spark?sparkSVG(s.spark):"";
   return `<div class="it${it.gold_score==null?" ref":""}"><div class="top1"><div class="nm" onclick="openInd('${it.id}')">${it.name} ›</div></div>
-   <div class="val"><b>${fmt(s.latest,dec)}</b><span>${sub}</span></div>
+   <div class="val"><b>${fmt(s.latest,dec)}</b><span>${sub}${it.stale?' · <span style="color:var(--gold2)">沿用上次資料</span>':''}</span></div>
    <div style="display:flex;gap:6px;flex-wrap:wrap">${pills}</div>
    ${sp}
    ${meter(it.gold_score)}
