@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-09-12T11:33:43+00:00",
- "generated_at_tpe": "09/12 19:33",
+ "generated_at": "2026-09-12T16:21:43+00:00",
+ "generated_at_tpe": "09/13 00:21",
  "mode": "live",
  "verdict": {
   "score": -2.6,
@@ -96,7 +96,7 @@
   "bear": "按兵不動且語氣偏鷹、或點陣圖上修未來利率；美元與實質殖利率上升。",
   "date_iso": "2026-09-17",
   "weekday": "週四",
-  "days_left": 5
+  "days_left": 4
  },
  "upcoming": [
   {
@@ -109,7 +109,7 @@
    "bear": "按兵不動且語氣偏鷹、或點陣圖上修未來利率；美元與實質殖利率上升。",
    "date_iso": "2026-09-17",
    "weekday": "週四",
-   "days_left": 5
+   "days_left": 4
   },
   {
    "time_tpe": "09/30 20:30",
@@ -121,7 +121,7 @@
    "bear": "核心 PCE 月增高於市場預期，公布後實質殖利率上升。",
    "date_iso": "2026-09-30",
    "weekday": "週三",
-   "days_left": 18
+   "days_left": 17
   },
   {
    "time_tpe": "10/02 20:30",
@@ -133,7 +133,7 @@
    "bear": "新增就業遠高於預期、薪資成長加速，市場減碼降息預期。",
    "date_iso": "2026-10-02",
    "weekday": "週五",
-   "days_left": 20
+   "days_left": 19
   }
  ],
  "categories": [
