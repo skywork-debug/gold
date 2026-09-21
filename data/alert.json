@@ -1,37 +1,30 @@
 {
- "key": "alert|WTI 原油",
- "status": "alert",
- "since": "09/22 01:03",
- "since_iso": "2026-09-22T01:03+08:00",
- "triggers": [
-  {
-   "name": "WTI 原油",
-   "why": "油價單日大幅波動（常伴隨地緣事件）",
-   "price": 91.26,
-   "chg_pct": -5.02
-  }
- ],
+ "key": "calm|",
+ "status": "calm",
+ "since": "09/22 05:04",
+ "since_iso": "2026-09-22T05:04+08:00",
+ "triggers": [],
  "readings": [
   {
    "name": "黃金",
-   "price": 4382.3,
-   "chg_pct": -0.96
+   "price": 4381.7,
+   "chg_pct": -0.98
   },
   {
    "name": "VIX 恐慌指數",
-   "price": 15.08,
-   "chg_pct": 1.82
+   "price": 14.87,
+   "chg_pct": 0.41
   },
   {
    "name": "美元指數 DXY",
-   "price": 100.39,
-   "chg_pct": 0.17
+   "price": 100.42,
+   "chg_pct": 0.2
   },
   {
    "name": "WTI 原油",
-   "price": 91.26,
-   "chg_pct": -5.02
+   "price": 91.98,
+   "chg_pct": -4.27
   }
  ],
- "note": "市場劇烈波動中：總經分數可能還沒反映，請以即時行情為準"
+ "note": "目前沒有劇烈波動"
 }
