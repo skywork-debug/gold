@@ -97,6 +97,7 @@ button{font-family:inherit}
 .vis svg{width:100%;height:auto;display:block}
 .kv{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
 .kv div{font-size:12px;color:var(--muted)}
+.upd{flex-basis:100%;font-size:12px;color:var(--muted);border-top:1px dashed var(--line2);padding-top:6px;margin-top:2px;line-height:1.6}
 .kv b{display:block;font-family:var(--mono);font-size:17px;color:var(--ink);font-weight:600}
 /* timeline */
 .tlbar{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px 18px 8px;margin-bottom:14px;overflow-x:auto}
@@ -414,7 +415,7 @@ function renderCOT(c){
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="投機淨多單 3 年百分位">${s}</svg><div class="fine">左端＝投機客普遍看空（空方擁擠，易軋空）；右端＝多單滿載（多方擁擠，易多殺多）</div>`;
   document.getElementById("cotsub").textContent=`${c.date} 報告：淨多單比過去 3 年 ${c.pct3y}% 的時間多 → ${c.zone}`;
   document.getElementById("cotspark").innerHTML=`<div class="fine" style="margin-top:6px">近 52 週淨多單走勢</div>`+sparkSVG(c.spark,{w:520,h:50});
-  document.getElementById("cotkv").innerHTML=`<div>淨多單<b>${fmt(c.net/1000,1)} 千口</b></div><div>一週變化<b>${c.chg_1w>0?"+":""}${fmt(c.chg_1w/1000,1)} 千</b></div><div>占未平倉<b>${fmt(c.net_pct_oi,1)}%</b></div><div style="flex-basis:100%;font-size:13px;color:var(--body)">${c.note}。每週五公布（資料為當週二）。</div>`;
+  document.getElementById("cotkv").innerHTML=`<div>淨多單<b>${fmt(c.net/1000,1)} 千口</b></div><div>一週變化<b>${c.chg_1w>0?"+":""}${fmt(c.chg_1w/1000,1)} 千</b></div><div>占未平倉<b>${fmt(c.net_pct_oi,1)}%</b></div><div style="flex-basis:100%;font-size:13px;color:var(--body)">${c.note}</div><div class="upd" style="flex-basis:100%">資料：CFTC 分類持倉報告｜每週五公布（部位日期為當週二），本站每日 5 次排程自動抓取</div>`;
 }
 function renderCB(st){
   const el=document.getElementById("cbcard"); const cb=st&&st.central_banks; if(!cb){el.innerHTML="";return}
@@ -440,7 +441,8 @@ function renderFedPath(f){
   pts.forEach((p,i)=>{const bp=Math.round((p.v-f.target_mid)*100);s+=`<circle cx="${X(i)}" cy="${Y(p.v)}" r="6" fill="${i?col:C.gold2}" stroke="#132a4f" stroke-width="2"/><text x="${X(i)+(i?0:10)}" y="${Y(p.v)+(i?-12:22)}" text-anchor="${i?"middle":"start"}" font-size="13" font-weight="600" fill="${C.ink}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${p.v.toFixed(2)}%${i?` (${bp>0?"+":""}${bp})`:""}</text><text x="${X(i)}" y="${H-10}" text-anchor="middle" font-size="12" fill="${C.muted}">${p.l}</text>`});
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="降息預期路徑">${s}</svg>`;
   const h=(f.horizons||[])[0];
-  document.getElementById("fedkv").innerHTML=`<div>聯準會目標區間<b>${f.target_range||"—"}</b></div>`+(h?`<div>市場押到年底<b style="color:${h.vs_now_bp>=25?C.bear:h.vs_now_bp<=-25?C.bull:C.gold2}">${h.vs_now_bp>0?"升息":"降息"}約 ${Math.abs(Math.round(h.vs_now_bp/25))} 碼</b></div>`:"")+`<div>虛線<b style="font-size:13px;font-family:inherit;color:var(--body)">＝目前利率；線往上＝押升息（黃金壓力）</b></div>`;
+  document.getElementById("fedkv").innerHTML=`<div>聯準會目標區間<b>${f.target_range||"—"}</b></div>`+(h?`<div>市場押到年底<b style="color:${h.vs_now_bp>=25?C.bear:h.vs_now_bp<=-25?C.bull:C.gold2}">${h.vs_now_bp>0?"升息":"降息"}約 ${Math.abs(Math.round(h.vs_now_bp/25))} 碼</b></div>`:"")+`<div>虛線<b style="font-size:13px;font-family:inherit;color:var(--body)">＝目前利率；線往上＝押升息（黃金壓力）</b></div>`
+   +`<div class="upd" style="flex-basis:100%">資料：CME 30 天聯邦基金期貨 ${h?"（"+h.date+" 收盤）":""}｜每日 5 次排程更新：08:07／12:07／15:07／21:17／23:07（台灣時間）</div>`;
 }
 function renderDXY(x){
   const el=document.getElementById("dxyruler"); if(!x){el.innerHTML='<div class="fine">資料尚未產生：到 GitHub Actions 按一次 Run workflow，跑完約 1～2 分鐘後重新整理</div>';return}
@@ -454,7 +456,8 @@ function renderDXY(x){
   const cx=X(x.level); s+=`<path d="M${cx} ${y0-2} l-9 -14 h18 z" fill="${C.gold2}"/><text x="${cx}" y="${y0-22}" text-anchor="middle" font-size="16" font-weight="600" fill="${C.gold2}" font-family="IBM Plex Mono,Menlo,Consolas,monospace">${fmt(x.level,2)}</text>`;
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="美元指數強弱尺">${s}</svg>`;
   document.getElementById("dxysub").textContent=`目前 ${fmt(x.level,2)}，落在「${x.zone}」區（${x.zone_gold}）`;
-  document.getElementById("dxykv").innerHTML=(x.pct10y!=null?`<div>比過去 10 年<b>${x.pct10y}% 的時間高</b></div>`:"")+(x.median10y?`<div>10 年中位數<b>${fmt(x.median10y,1)}</b></div>`:"")+(x.ma200?`<div>200 日均線（虛線）<b style="color:${x.vs_ma200_pct>0?C.bear:C.bull}">${fmt(x.ma200,2)}（${x.vs_ma200_pct>0?"+":""}${fmt(x.vs_ma200_pct,2)}%）</b></div>`:"");
+  document.getElementById("dxykv").innerHTML=(x.pct10y!=null?`<div>比過去 10 年<b>${x.pct10y}% 的時間高</b></div>`:"")+(x.median10y?`<div>10 年中位數<b>${fmt(x.median10y,1)}</b></div>`:"")+(x.ma200?`<div>200 日均線（虛線）<b style="color:${x.vs_ma200_pct>0?C.bear:C.bull}">${fmt(x.ma200,2)}（${x.vs_ma200_pct>0?"+":""}${fmt(x.vs_ma200_pct,2)}%）</b></div>`:"")
+   +`<div class="upd" style="flex-basis:100%">資料：ICE 美元指數 ${x.date?"（"+x.date+" 收盤）":""}｜每日 5 次排程更新；上方即時行情列是盤中跳動報價</div>`;
 }
 function renderTimeline(){
   const up=DATA.upcoming||[], el=document.getElementById("tlbar");
@@ -560,7 +563,7 @@ function openModal(k){
    非農：近 3 個月平均 &lt;100 千人 +1、&lt;50 +2，&gt;175 −1、&gt;250 −2。失業率：比近 12 個月低點高 0.3 +1、0.5 +2。<br>
    VIX：≥20 +1、≥25 +2、≤13 −1。信用利差：20 日擴大 20 bp +1、50 bp +2。WTI：押升息時油價漲 5% −1、10% −2（通膨壓力）；押降息時反過來算偏多（避險）；方向不明時只有漲 10% 以上且 VIX ≥ 20 才算避險偏多。</p>
    <h5>三層訊號（互相獨立，不混在一起）</h5><p>① 總經方向＝上面的加減分總分。② 資金擁擠度＝CFTC 管理基金黃金期貨淨多單在過去 3 年的百分位：≥90% 多方極度擁擠（容易多殺多）、75–90% 偏擁擠、25–75% 中性、10–25% 多單偏少、≤10% 空方極度擁擠（容易軋空）。③ 技術位置＝COMEX 黃金收盤價相對 50／200 日均線：兩條都在上方＝多頭結構、都在下方＝空頭結構、夾在中間＝反彈或回檔。三者同向時訊號最強；互相矛盾時代表方向還不明確。</p>
-   <h5>劇烈波動警示</h5><p>每 30 分鐘檢查 Yahoo 即時報價與前一日收盤比較：黃金 ±1.5%、VIX 上升 20% 或高於 30、DXY ±1%、WTI 原油 ±5%，任一成立就在頁面頂端顯示警示，恢復後自動消失。它只提醒「市場正在劇烈反應」，不改變總經分數。</p>
+   <h5>劇烈波動警示</h5><p>每 15 分鐘檢查 Yahoo 即時報價與前一日收盤比較：黃金 ±1.5%、VIX 上升 20% 或高於 30、DXY ±1%、WTI 原油 ±5%，任一成立就在頁面頂端顯示警示，恢復後自動消失。它只提醒「市場正在劇烈反應」，不改變總經分數。</p>
    <h5>不計分的參考指標</h5><p>整體 CPI、整體 PCE（與核心重複）、廣義美元指數（與 DXY 重複）、布蘭特原油（與 WTI 重複）、10 年期殖利率（與 2 年期、實質殖利率重疊）。</p>
    <h5>美元指數強弱區間</h5><p>沒有官方標準。本站用市場慣用的 1973 年基期 100 為中線：&lt;90 弱勢、90–95 偏弱、95–100 中性、100–105 偏強、&gt;105 強勢；另外附上「過去 10 年百分位」與「200 日均線」兩個較客觀的參考。</p>
    <p class="fine" style="margin-top:12px">門檻寫在 scripts/fetch_data.py，可自行調整。</p>`;
@@ -571,7 +574,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 fetch("data/alert.json?t="+Date.now()).then(r=>r.ok?r.json():null).then(a=>{
   if(!a||a.status!=="alert") return;
   const el=document.getElementById("alert");
-  el.innerHTML=`<div class="ic">⚠</div><div style="flex:1;min-width:240px"><b>劇烈波動警示</b>（${a.since} 起）：${a.note}<div>${a.triggers.map(t=>`<span class="tg">${t.name} ${t.chg_pct>0?"+":""}${t.chg_pct}%</span>`).join("")}</div><div class="fine" style="margin-top:4px">每 30 分鐘檢查一次：黃金單日 ±1.5%、VIX 單日 +20% 或 ≥30、DXY ±1%、原油 ±5% 任一成立就會出現；恢復平靜後自動消失</div></div>`;
+  el.innerHTML=`<div class="ic">⚠</div><div style="flex:1;min-width:240px"><b>劇烈波動警示</b>（${a.since} 起）：${a.note}<div>${a.triggers.map(t=>`<span class="tg">${t.name} ${t.chg_pct>0?"+":""}${t.chg_pct}%</span>`).join("")}</div><div class="fine" style="margin-top:4px">每 15 分鐘檢查一次：黃金單日 ±1.5%、VIX 單日 +20% 或 ≥30、DXY ±1%、原油 ±5% 任一成立就會出現；恢復平靜後自動消失</div></div>`;
   el.hidden=false;
 }).catch(()=>{});
 fetch("data/data.json?t="+Date.now()).then(r=>r.json()).then(render).catch(err=>{
