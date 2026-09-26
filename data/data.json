@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-09-26T12:09:17+00:00",
- "generated_at_tpe": "09/26 20:09",
+ "generated_at": "2026-09-26T17:14:40+00:00",
+ "generated_at_tpe": "09/27 01:14",
  "mode": "live",
  "verdict": {
   "score": -6.1,
@@ -96,7 +96,7 @@
   "bear": "核心 PCE 月增高於市場預期，公布後實質殖利率上升。",
   "date_iso": "2026-09-30",
   "weekday": "週三",
-  "days_left": 4
+  "days_left": 3
  },
  "upcoming": [
   {
@@ -109,7 +109,7 @@
    "bear": "核心 PCE 月增高於市場預期，公布後實質殖利率上升。",
    "date_iso": "2026-09-30",
    "weekday": "週三",
-   "days_left": 4
+   "days_left": 3
   },
   {
    "time_tpe": "10/02 20:30",
@@ -121,7 +121,7 @@
    "bear": "新增就業遠高於預期、薪資成長加速，市場減碼降息預期。",
    "date_iso": "2026-10-02",
    "weekday": "週五",
-   "days_left": 6
+   "days_left": 5
   },
   {
    "time_tpe": "10/14 20:30",
@@ -133,7 +133,7 @@
    "bear": "核心 CPI 月增高於市場預期，公布後實質殖利率上升、美元走強。",
    "date_iso": "2026-10-14",
    "weekday": "週三",
-   "days_left": 18
+   "days_left": 17
   },
   {
    "time_tpe": "10/15 20:30",
@@ -145,7 +145,7 @@
    "bear": "高於市場預期，且公布後美債殖利率與美元同步上升。",
    "date_iso": "2026-10-15",
    "weekday": "週四",
-   "days_left": 19
+   "days_left": 18
   }
  ],
  "categories": [
