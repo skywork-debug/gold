@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-11T10:45:06+00:00",
- "generated_at_tpe": "10/11 18:45",
+ "generated_at": "2026-10-11T13:54:00+00:00",
+ "generated_at_tpe": "10/11 21:54",
  "mode": "live",
  "verdict": {
   "score": -3.4,
@@ -158,6 +158,18 @@
    "date_iso": "2026-11-06",
    "weekday": "週五",
    "days_left": 26
+  },
+  {
+   "time_tpe": "11/10 21:30",
+   "name": "CPI 消費者物價",
+   "period": "10 月",
+   "series": "CPIAUCSL",
+   "why": "為什麼看：物價是聯準會決定要不要降息的第一依據。",
+   "bull": "核心 CPI 月增低於市場預期，公布後實質殖利率下降、美元轉弱。",
+   "bear": "核心 CPI 月增高於市場預期，公布後實質殖利率上升、美元走強。",
+   "date_iso": "2026-11-10",
+   "weekday": "週二",
+   "days_left": 30
   }
  ],
  "categories": [
