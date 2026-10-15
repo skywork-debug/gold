@@ -513,7 +513,7 @@ function renderReleased(){
   if(!el) return;
   if(!rs.length){el.innerHTML='<div class="fine">還沒有已公布的數據紀錄，下一次排程更新後就會出現</div>';return}
   el.innerHTML=rs.map(e=>{
-    const col=e.react?(e.react.pct>0?C.bull:e.react.pct<0?C.bear:C.muted):C.muted;
+    const col=e.react?(e.react.end>0?C.bull:e.react.end<0?C.bear:C.muted):C.muted;
     let badge="";
     if(e.direction==="above"||e.direction==="below"){
       const bc=e.gold_rule==="bull"?C.bull:C.bear, sign=e.surprise>0?"+":"";
@@ -536,12 +536,14 @@ function renderReleased(){
       ${badge}
       ${e.react?relSpark(e.react,col):""}
       <div class="react">
-        <div>公布後 ${e.react?e.react.minutes:45} 分鐘<b style="color:${col}">${e.react?sg(e.react.pct):"—"}</b></div>
+        ${e.react?`<div>第一時間 15 分<b style="color:${e.react.first>0?C.bull:e.react.first<0?C.bear:C.muted}">${sg(e.react.first)}</b></div>
+        <div>${e.react.hours} 小時內高／低<b><span style="color:${C.bull}">${sg(e.react.hi)}</span> <span style="color:var(--muted)">／</span> <span style="color:${C.bear}">${sg(e.react.lo)}</span></b></div>
+        <div>${e.react.hours} 小時後<b style="color:${col}">${sg(e.react.end)}</b></div>`:""}
         <div>當日收盤<b style="color:${e.day_pct>0?C.bull:e.day_pct<0?C.bear:C.muted}">${e.day_pct!=null?sg(e.day_pct):"—"}</b></div>
       </div>
       <div class="vd">${e.verdict||""}</div>
     </div>`}).join("")
-    +`<div class="upd" style="grid-column:1/-1">實際值：FRED 官方數列（和新聞引用的口徑相同）｜市場預估與前值：ForexFactory 公開行事曆，本站自 2026-10 起逐週自動存檔，更早的場次由人工依當時的財經行事曆補登｜黃金反應：COMEX 黃金 15 分鐘線</div>`;
+    +`<div class="upd" style="grid-column:1/-1">實際值：FRED 官方數列（和新聞引用的口徑相同）｜市場預估與前值：ForexFactory 公開行事曆，本站自 2026-10 起逐週自動存檔，更早的場次由人工依當時的財經行事曆補登｜黃金反應：COMEX 黃金 15 分鐘線，高低含影線，基準為公布前最後一根收盤</div>`;
 }
 function renderEvents(){
   const up=DATA.upcoming||[], list=document.getElementById("evlist");
