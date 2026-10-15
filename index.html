@@ -517,7 +517,8 @@ function renderReleased(){
     let badge="";
     if(e.direction==="above"||e.direction==="below"){
       const bc=e.gold_rule==="bull"?C.bull:C.bear, sign=e.surprise>0?"+":"";
-      badge=`<span class="badge" style="color:${bc};border-color:${bc};background:${e.gold_rule==="bull"?"var(--bull-dim)":"var(--bear-dim)"}">${e.direction==="above"?"高於預期":"低於預期"} ${sign}${fmt(e.surprise,2)}　→　對黃金${e.gold_rule==="bull"?"偏多":"偏空"}</span>`;
+      const sv=e.unit==="%"?fmt(e.surprise,2):fmt(e.surprise,0)+"K";
+      badge=`<span class="badge" style="color:${bc};border-color:${bc};background:${e.gold_rule==="bull"?"var(--bull-dim)":"var(--bear-dim)"}">${e.direction==="above"?"高於預期":"低於預期"} ${sign}${sv}　→　對黃金${e.gold_rule==="bull"?"偏多":"偏空"}</span>`;
     }else if(e.direction==="inline"){
       badge=`<span class="badge" style="color:${C.gold2};border-color:${C.gold2};background:var(--gold-dim)">符合預期</span>`;
     }else{
@@ -540,7 +541,7 @@ function renderReleased(){
       </div>
       <div class="vd">${e.verdict||""}</div>
     </div>`}).join("")
-    +`<div class="upd" style="grid-column:1/-1">實際值：FRED 官方數列（和新聞引用的口徑相同）｜市場預估與前值：ForexFactory 公開行事曆，本站自 2026-10 起逐週存檔，更早的場次沒有預估值｜黃金反應：COMEX 黃金 15 分鐘線</div>`;
+    +`<div class="upd" style="grid-column:1/-1">實際值：FRED 官方數列（和新聞引用的口徑相同）｜市場預估與前值：ForexFactory 公開行事曆，本站自 2026-10 起逐週自動存檔，更早的場次由人工依當時的財經行事曆補登｜黃金反應：COMEX 黃金 15 分鐘線</div>`;
 }
 function renderEvents(){
   const up=DATA.upcoming||[], list=document.getElementById("evlist");
