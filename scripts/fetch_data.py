@@ -814,22 +814,32 @@ def update_consensus(seed: bool) -> dict:
 
 
 def fetch_gold_15m(seed: bool):
-    """黃金 15 分鐘線（近一個月），用來量「數據公布當下」的反應。"""
+    """黃金 15 分鐘線（近一個月），用來量「數據公布當下」的反應。
+    回傳 (epoch, close, high, low)：量路徑要用高低點，只看收盤會把衝高又被打回來的那一段算不見。"""
     if seed:
         p = SEED_DIR / "GC_F_15m.csv"
         if not p.exists():
             return []
         out = []
         for rr in csv.DictReader(io.StringIO(p.read_text())):
-            out.append((int(rr["epoch"]), float(rr["close"])))
+            c = float(rr["close"])
+            out.append((int(rr["epoch"]), c, float(rr.get("high") or c), float(rr.get("low") or c)))
         return out
     j = json.loads(http_get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?range=1mo&interval=15m"))
     res = (j.get("chart") or {}).get("result") or []
     if not res:
         return []
     ts = res[0].get("timestamp") or []
-    cl = res[0]["indicators"]["quote"][0].get("close") or []
-    return [(int(t), float(c)) for t, c in zip(ts, cl) if c is not None]
+    q = res[0]["indicators"]["quote"][0]
+    cl, hi, lo = q.get("close") or [], q.get("high") or [], q.get("low") or []
+    out = []
+    for i, (tt, c) in enumerate(zip(ts, cl)):
+        if c is None:
+            continue
+        h = hi[i] if i < len(hi) and hi[i] is not None else c
+        l = lo[i] if i < len(lo) and lo[i] is not None else c
+        out.append((int(tt), float(c), float(h), float(l)))
+    return out
 
 
 _NUM_RE = re.compile(r"^(-?\d+(?:\.\d+)?)")
@@ -876,26 +886,53 @@ def actual_for(metric, rows, ym):
     return None
 
 
-def gold_reaction(bars, t_utc: datetime, minutes: int = 45):
-    """公布前最後一根完整 15 分 K 的收盤，對公布後 N 分鐘的收盤。另外附近 4 小時的走勢點。
+def gold_reaction(bars, t_utc: datetime, hours: int = 3):
+    """量「公布後這段路怎麼走」，不是只比頭尾兩個點。
 
-    注意：每根 K 的時間戳是「開始時間」，所以公布時刻那一根本身已經含了消息，
-    基準必須取前一根（t < t0），否則會把暴衝的那一段算掉。
+    只比端點會出大錯：非農那場公布前 4216、45 分鐘後 4223，看起來沒動，
+    但中間先衝到 4248 再翻空殺到 4156。所以這裡同時給：
+      first  公布後第一根 15 分 K 的收盤（第一時間的直覺反應）
+      hi/lo  公布後 N 小時內的最高與最低（含影線），以及誰先出現
+      end    N 小時後的收盤
+    每根 K 的時間戳是「開始時間」，公布那一根本身已經含了消息，所以基準取前一根。
     """
     if not bars:
         return None
     t0 = int(t_utc.timestamp())
-    before = [(t, c) for t, c in bars if t < t0]
-    after = [(t, c) for t, c in bars if t0 <= t <= t0 + minutes * 60]
+    before = [b for b in bars if b[0] < t0]
+    after = [b for b in bars if t0 <= b[0] <= t0 + hours * 3600]
     if not before or not after:
         return None
     if t0 - before[-1][0] > 3 * 3600:      # 公布時段完全沒報價（休市）就不給數字
         return None
-    base, post = before[-1][1], after[-1][1]
-    win = [(t, c) for t, c in bars if t0 - 3600 <= t <= t0 + 3 * 3600]
-    mark = next((i for i, (t, _) in enumerate(win) if t >= t0), 0)
-    return dict(base=r(base, 1), post=r(post, 1), pct=r((post / base - 1) * 100, 2),
-                minutes=minutes, spark=[r(c, 1) for _, c in win], spark_mark=mark)
+    base = before[-1][1]
+    pct = lambda v: r((v / base - 1) * 100, 2)
+
+    hb = max(after, key=lambda b: b[2])
+    lb = min(after, key=lambda b: b[3])
+    win = [b for b in bars if t0 - 3600 <= b[0] <= t0 + hours * 3600]
+    mark = next((i for i, b in enumerate(win) if b[0] >= t0), 0)
+    return dict(base=r(base, 1), hours=hours,
+                first=pct(after[0][1]), first_min=15,
+                hi=pct(hb[2]), lo=pct(lb[3]), hi_first=hb[0] <= lb[0],
+                hi_min=int((hb[0] - t0) / 60) + 15, lo_min=int((lb[0] - t0) / 60) + 15,
+                end=pct(after[-1][1]),
+                spark=[r(b[1], 1) for b in win], spark_mark=mark)
+
+
+def _react_phrase(rk):
+    """把路徑講成一句人話。"""
+    hi, lo, SWING = rk["hi"], rk["lo"], 0.3
+    up, dn = hi >= SWING, lo <= -SWING
+    if up and dn:
+        if rk["hi_first"]:
+            return f"先急漲 {hi:.2f}%，之後翻空、最多跌 {abs(lo):.2f}%", "down" if rk["end"] < 0 else "up"
+        return f"先急跌 {abs(lo):.2f}%，之後翻多、最多漲 {hi:.2f}%", "up" if rk["end"] > 0 else "down"
+    if up:
+        return f"一路走高，最多漲 {hi:.2f}%", "up"
+    if dn:
+        return f"一路走低，最多跌 {abs(lo):.2f}%", "down"
+    return f"幾乎沒動（{rk['hi']:+.2f}% ～ {rk['lo']:+.2f}%）", "flat"
 
 
 # 每個事件要對到 ForexFactory 的哪一個標題、實際值怎麼從 FRED 算
@@ -1004,7 +1041,7 @@ def released_events(now_tpe: datetime, raw_month: dict, consensus: dict, bars, g
 
 
 def _release_verdict(name, cfg, direction, gold_rule, react, surprise):
-    """規則判讀 → 再對照黃金實際怎麼走，兩者分開講，不一致時明講。"""
+    """規則判讀 → 再對照黃金實際走的路徑，兩者分開講，不一致時明講。"""
     if cfg["metric"] == "fomc":
         head = "利率決議本身要看聲明與點陣圖，單一數字不足以判斷"
     elif direction is None:
@@ -1017,18 +1054,17 @@ def _release_verdict(name, cfg, direction, gold_rule, react, surprise):
         head = f"{'通膨' if cfg['hot'] == 'inflation' else '就業'}低於預期，降息空間變大，照理對黃金偏多"
     if not react:
         return head + "。公布當下沒有抓到黃金的分鐘報價"
-    moved = react["pct"]
-    if abs(moved) < 0.2:
-        act_txt = f"黃金在公布後 {react['minutes']} 分鐘幾乎沒動（{moved:+.2f}%）"
-    else:
-        strong = "大幅" if abs(moved) >= 1.0 else ""
-        act_txt = f"黃金在公布後 {react['minutes']} 分鐘{strong}{'上漲' if moved > 0 else '下跌'} {abs(moved):.2f}%"
-    if gold_rule in ("bull", "bear") and abs(moved) >= 0.2:
-        agree = (gold_rule == "bull" and moved > 0) or (gold_rule == "bear" and moved < 0)
-        tail = "，走勢和上面的邏輯一致" if agree else "，和上面的邏輯相反——代表當下還有別的力量在主導，別只看單一數據"
+    phrase, net = _react_phrase(react)
+    body = f"黃金在公布後 {react['hours']} 小時內{phrase}，最後收在 {react['end']:+.2f}%"
+    if gold_rule in ("bull", "bear") and net != "flat":
+        agree = (gold_rule == "bull" and net == "up") or (gold_rule == "bear" and net == "down")
+        tail = "，方向和上面的邏輯一致" if agree else "，和上面的邏輯相反——代表當下還有別的力量在主導，別只看單一數據"
     else:
         tail = ""
-    return head + f"。{act_txt}{tail}"
+    swing = ""
+    if react["hi"] >= 0.3 and react["lo"] <= -0.3:
+        swing = "。數據行情常常是先衝一段再回頭，追第一根很容易被雙巴"
+    return head + f"。{body}{tail}{swing}"
 
 
 # ---------------------------------------------------------------------------
