@@ -762,6 +762,256 @@ def next_event(now_tpe: datetime):
 
 
 # ---------------------------------------------------------------------------
+# 已公布的數據：前值／市場預估／實際，以及公布當下黃金怎麼走
+# ---------------------------------------------------------------------------
+FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
+
+
+def update_consensus(seed: bool) -> dict:
+    """把 ForexFactory 公開行事曆的「市場預估值」累積存進 data/consensus.json。
+
+    這個免費來源只提供「本週」，拿不到歷史，所以必須逐週累積：排程一天跑 5 次，
+    任何一場數據在公布前一定會被抓到並存起來，公布後就能拿來和實際值比對。
+    實際值不從這裡拿（它沒有 actual 欄位），一律用 FRED 官方數字。
+    """
+    p = DATA_DIR / "consensus.json"
+    store = {}
+    if p.exists():
+        try:
+            store = json.loads(p.read_text(encoding="utf-8"))
+        except ValueError:
+            store = {}
+    if seed:
+        return store
+    j = json.loads(http_get(FF_URL))
+    n = 0
+    for o in j:
+        if o.get("country") != "USD" or o.get("impact") not in ("High", "Medium"):
+            continue
+        try:
+            t = datetime.fromisoformat(o["date"]).astimezone(timezone.utc)
+        except (KeyError, ValueError, TypeError):
+            continue
+        k = t.strftime("%Y-%m-%dT%H:%M") + "|" + (o.get("title") or "")
+        rec = {"f": o.get("forecast") or "", "p": o.get("previous") or ""}
+        if store.get(k) != rec:
+            store[k] = rec
+            n += 1
+    cut = (datetime.now(timezone.utc) - timedelta(days=400)).strftime("%Y-%m-%d")
+    store = {k: v for k, v in sorted(store.items()) if k[:10] >= cut}
+    p.write_text(json.dumps(store, ensure_ascii=False, indent=0, sort_keys=True), encoding="utf-8")
+    print(f"[ok] consensus.json：新增／更新 {n} 筆，累積 {len(store)} 筆", flush=True)
+    return store
+
+
+def fetch_gold_15m(seed: bool):
+    """黃金 15 分鐘線（近一個月），用來量「數據公布當下」的反應。"""
+    if seed:
+        p = SEED_DIR / "GC_F_15m.csv"
+        if not p.exists():
+            return []
+        out = []
+        for rr in csv.DictReader(io.StringIO(p.read_text())):
+            out.append((int(rr["epoch"]), float(rr["close"])))
+        return out
+    j = json.loads(http_get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?range=1mo&interval=15m"))
+    res = (j.get("chart") or {}).get("result") or []
+    if not res:
+        return []
+    ts = res[0].get("timestamp") or []
+    cl = res[0]["indicators"]["quote"][0].get("close") or []
+    return [(int(t), float(c)) for t, c in zip(ts, cl) if c is not None]
+
+
+_NUM_RE = re.compile(r"^(-?\d+(?:\.\d+)?)")
+
+
+def _num(s):
+    """把 '3.6%'、'137K'、'-34.7B' 轉成數字；空字串回 None。單位不換算，維持公布時的寫法。"""
+    if s is None:
+        return None
+    s = str(s).strip().replace(",", "").lstrip("<>~≈")
+    m = _NUM_RE.match(s)
+    return float(m.group(1)) if m else None
+
+
+def _val_at(rows, ym):
+    for d, v in rows:
+        if d[:7] == ym:
+            return v
+    return None
+
+
+def _shift(ym, months):
+    y, m = int(ym[:4]), int(ym[5:7])
+    t = y * 12 + (m - 1) - months
+    return f"{t // 12:04d}-{t % 12 + 1:02d}"
+
+
+def actual_for(metric, rows, ym):
+    """用 FRED 原始月資料，算出那一期公布的數字（和新聞引用的口徑一致）。"""
+    cur = _val_at(rows, ym)
+    if cur is None:
+        return None
+    if metric == "yoy":
+        base = _val_at(rows, _shift(ym, 12))
+        return (cur / base - 1) * 100 if base else None
+    if metric == "mom":
+        base = _val_at(rows, _shift(ym, 1))
+        return (cur / base - 1) * 100 if base else None
+    if metric == "diff_k":
+        base = _val_at(rows, _shift(ym, 1))
+        return cur - base if base is not None else None
+    if metric == "level":
+        return cur
+    return None
+
+
+def gold_reaction(bars, t_utc: datetime, minutes: int = 45):
+    """公布前最後一根完整 15 分 K 的收盤，對公布後 N 分鐘的收盤。另外附近 4 小時的走勢點。
+
+    注意：每根 K 的時間戳是「開始時間」，所以公布時刻那一根本身已經含了消息，
+    基準必須取前一根（t < t0），否則會把暴衝的那一段算掉。
+    """
+    if not bars:
+        return None
+    t0 = int(t_utc.timestamp())
+    before = [(t, c) for t, c in bars if t < t0]
+    after = [(t, c) for t, c in bars if t0 <= t <= t0 + minutes * 60]
+    if not before or not after:
+        return None
+    if t0 - before[-1][0] > 3 * 3600:      # 公布時段完全沒報價（休市）就不給數字
+        return None
+    base, post = before[-1][1], after[-1][1]
+    win = [(t, c) for t, c in bars if t0 - 3600 <= t <= t0 + 3 * 3600]
+    mark = next((i for i, (t, _) in enumerate(win) if t >= t0), 0)
+    return dict(base=r(base, 1), post=r(post, 1), pct=r((post / base - 1) * 100, 2),
+                minutes=minutes, spark=[r(c, 1) for _, c in win], spark_mark=mark)
+
+
+# 每個事件要對到 ForexFactory 的哪一個標題、實際值怎麼從 FRED 算
+EVENT_MAP = {
+    "CPIAUCSL": dict(ff=["CPI y/y"], metric="yoy", unit="%", label="年增率",
+                     hot="inflation"),
+    "PPIFIS":   dict(ff=["PPI m/m"], metric="mom", unit="%", label="月增率",
+                     hot="inflation"),
+    "PCEPILFE": dict(ff=["Core PCE Price Index m/m"], metric="mom", unit="%", label="月增率",
+                     hot="inflation"),
+    "PAYEMS":   dict(ff=["Non-Farm Employment Change"], metric="diff_k", unit="千人", label="新增就業",
+                     hot="growth"),
+    "DFF":      dict(ff=["Federal Funds Rate"], metric="fomc", unit="%", label="利率區間",
+                     hot="rates"),
+}
+
+
+def released_events(now_tpe: datetime, raw_month: dict, consensus: dict, bars, gold_rows, limit=3):
+    """近 45 天內已經公布的事件，組出『前值／預估／實際 → 黃金當下怎麼走』。"""
+    p = DATA_DIR / "calendar.json"
+    if not p.exists():
+        return []
+    cal = json.loads(p.read_text(encoding="utf-8"))
+    wd = "一二三四五六日"
+    past = []
+    for ev in cal.get("events", []):
+        try:
+            t = datetime.strptime(ev["time_tpe"], "%Y-%m-%d %H:%M").replace(tzinfo=TAIPEI)
+        except (KeyError, ValueError):
+            continue
+        if t <= now_tpe - timedelta(minutes=50) and t >= now_tpe - timedelta(days=45):
+            past.append((t, ev))
+    past.sort(key=lambda x: x[0], reverse=True)
+
+    out = []
+    for t, ev in past[:limit]:
+        sid = ev.get("series")
+        cfg = EVENT_MAP.get(sid)
+        if not cfg:
+            continue
+        t_utc = t.astimezone(timezone.utc)
+        key_t = t_utc.strftime("%Y-%m-%dT%H:%M")
+        hit = next((consensus[key_t + "|" + nm] for nm in cfg["ff"] if key_t + "|" + nm in consensus), None)
+        fc_raw = (hit or {}).get("f") or None
+        pv_raw = (hit or {}).get("p") or None
+
+        # 參考月份：9 月 CPI 在 10 月公布，period 寫「9 月」
+        ym = None
+        mm = re.search(r"(\d+)", ev.get("period") or "")
+        if mm:
+            m = int(mm.group(1)); y = t.year - (1 if m > t.month else 0)
+            ym = f"{y:04d}-{m:02d}"
+        rows = raw_month.get(sid) or []
+        act = actual_for(cfg["metric"], rows, ym) if (ym and cfg["metric"] != "fomc") else None
+        if cfg["metric"] == "fomc":
+            lo, hi = raw_month.get("DFEDTARL") or [], raw_month.get("DFEDTARU") or []
+            d1 = (t.date() + timedelta(days=1)).isoformat()
+            vl = [v for d, v in lo if d <= d1]; vh = [v for d, v in hi if d <= d1]
+            act_txt = f"{vl[-1]}–{vh[-1]}%" if vl and vh else None
+        else:
+            act_txt = None if act is None else (f"{r(act, 1)}%" if cfg["unit"] == "%" else f"{r(act, 0):.0f}K")
+
+        fc = _num(fc_raw)
+        surprise = None if (fc is None or act is None) else r(act - fc, 2)
+        if surprise is None:
+            direction, gold_rule = None, None
+        elif abs(surprise) < (0.05 if cfg["unit"] == "%" else 10):
+            direction, gold_rule = "inline", "neutral"
+        elif surprise > 0:
+            direction = "above"
+            gold_rule = "bear"      # 通膨或就業高於預期 → 降息空間縮小 → 不利黃金
+        else:
+            direction = "below"
+            gold_rule = "bull"
+
+        react = gold_reaction(bars, t_utc)
+        day = None
+        if gold_rows:
+            ds = t.date().isoformat()
+            idx = [i for i, (d, _) in enumerate(gold_rows) if d == ds]
+            if idx and idx[0] > 0:
+                i = idx[0]
+                day = r((gold_rows[i][1] / gold_rows[i - 1][1] - 1) * 100, 2)
+
+        verdict = _release_verdict(ev["name"], cfg, direction, gold_rule, react, surprise)
+        out.append(dict(
+            name=ev["name"], period=ev.get("period"), series=sid, label=cfg["label"], unit=cfg["unit"],
+            time_tpe=t.strftime("%m/%d %H:%M"), date_iso=t.date().isoformat(), weekday="週" + wd[t.weekday()],
+            days_ago=(now_tpe.date() - t.date()).days,
+            previous=pv_raw, forecast=fc_raw, actual=act_txt,
+            surprise=surprise, direction=direction, gold_rule=gold_rule,
+            react=react, day_pct=day, verdict=verdict,
+            no_forecast=fc_raw is None))
+    return out
+
+
+def _release_verdict(name, cfg, direction, gold_rule, react, surprise):
+    """規則判讀 → 再對照黃金實際怎麼走，兩者分開講，不一致時明講。"""
+    if cfg["metric"] == "fomc":
+        head = "利率決議本身要看聲明與點陣圖，單一數字不足以判斷"
+    elif direction is None:
+        head = "這一場我們還沒存到當時的市場預估值，只能看前值與實際值的變化"
+    elif direction == "inline":
+        head = "實際值幾乎貼著市場預期，對降息路徑的想像沒有被改寫"
+    elif gold_rule == "bear":
+        head = f"{'通膨' if cfg['hot'] == 'inflation' else '就業'}高於預期，降息空間被壓縮，照理對黃金偏空"
+    else:
+        head = f"{'通膨' if cfg['hot'] == 'inflation' else '就業'}低於預期，降息空間變大，照理對黃金偏多"
+    if not react:
+        return head + "。公布當下沒有抓到黃金的分鐘報價"
+    moved = react["pct"]
+    if abs(moved) < 0.2:
+        act_txt = f"黃金在公布後 {react['minutes']} 分鐘幾乎沒動（{moved:+.2f}%）"
+    else:
+        strong = "大幅" if abs(moved) >= 1.0 else ""
+        act_txt = f"黃金在公布後 {react['minutes']} 分鐘{strong}{'上漲' if moved > 0 else '下跌'} {abs(moved):.2f}%"
+    if gold_rule in ("bull", "bear") and abs(moved) >= 0.2:
+        agree = (gold_rule == "bull" and moved > 0) or (gold_rule == "bear" and moved < 0)
+        tail = "，走勢和上面的邏輯一致" if agree else "，和上面的邏輯相反——代表當下還有別的力量在主導，別只看單一數據"
+    else:
+        tail = ""
+    return head + f"。{act_txt}{tail}"
+
+
+# ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", action="store_true", help="離線：讀 scripts/seed/*.csv")
@@ -785,6 +1035,7 @@ def main():
         prev["_gold_moves"] = _old.get("gold_moves")
         prev["_gold_tech"] = _old.get("gold_tech")
         prev["_cot"] = _old.get("cot")
+        prev["_released"] = _old.get("released")
     except Exception:  # noqa: BLE001
         pass
 
@@ -831,6 +1082,7 @@ def main():
     st_by_id = {}
     gold_moves = None
     gold_tech = None
+    gold_rows = None
     for s in MARKET_SERIES:
         try:
             rows = fetch_yahoo(s["id"], s.get("rng", "6mo"), seed) if s["src"] == "yahoo" else fetch_fred(s["id"], start_daily, seed)
@@ -852,6 +1104,7 @@ def main():
         if s["id"] == "GC=F":
             gold_moves = calendar_moves(rows)
             gold_tech = technicals(rows)
+            gold_rows = rows
         markets.append(dict(id=s["id"], name=s["name"], unit=s["unit"], source=s["src"], stats=st))
 
     aux = {}
@@ -859,6 +1112,7 @@ def main():
         try:
             rows = fetch_fred(sid, start_daily, seed)
             aux[sid] = rows[-1][1] if rows else None
+            raw_month[sid] = rows
         except Exception as e:  # noqa: BLE001
             errors.append(f"聯準會利率區間（{sid}）：來源暫時連不上")
             aux[sid] = None
@@ -901,6 +1155,27 @@ def main():
     verdict["regime"] = regime
     nxt, upcoming = next_event(now_tpe)
     try:
+        consensus = update_consensus(seed)
+    except Exception as e:  # noqa: BLE001
+        errors.append("市場預估值（ForexFactory 行事曆）：來源暫時連不上，沿用已存檔的預估值")
+        print(f"[warn] consensus: {e}", flush=True)
+        cp = DATA_DIR / "consensus.json"
+        try:
+            consensus = json.loads(cp.read_text(encoding="utf-8")) if cp.exists() else {}
+        except ValueError:
+            consensus = {}
+    try:
+        bars15 = fetch_gold_15m(seed)
+    except Exception as e:  # noqa: BLE001
+        print(f"[warn] 黃金 15 分線: {e}", flush=True)
+        bars15 = []
+    try:
+        released = released_events(now_tpe, raw_month, consensus, bars15, gold_rows)
+    except Exception as e:  # noqa: BLE001
+        errors.append("已公布數據：整理時出錯，沿用上次資料")
+        print(f"[warn] released: {e}", flush=True)
+        released = prev.get("_released") or []
+    try:
         cot = fetch_cot(seed)
     except Exception as e:  # noqa: BLE001
         errors.append("CFTC 籌碼：來源暫時連不上，沿用上次資料")
@@ -919,6 +1194,7 @@ def main():
         pillars=pillars,
         fed=fedx,
         next_event=nxt,
+        released=released,
         upcoming=upcoming,
         categories=categories,
         fed_item=fed_item,
