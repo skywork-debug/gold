@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-15T04:27:20+00:00",
- "generated_at_tpe": "10/15 12:27",
+ "generated_at": "2026-10-15T06:00:47+00:00",
+ "generated_at_tpe": "10/15 14:00",
  "mode": "live",
  "verdict": {
   "score": -4.0,
@@ -18,7 +18,7 @@
    "why": "為什麼看：市場預期降息越多，持有黃金的機會成本越低。",
    "score": 0,
    "title": "市場沒押明顯方向",
-   "evidence": "聯邦基金期貨隱含年底利率 4.09%，較目前中點 3.875% 差 +21 bp",
+   "evidence": "聯邦基金期貨隱含年底利率 4.10%，較目前中點 3.875% 差 +22 bp",
    "links": [
     "DGS2",
     "DFF"
@@ -30,7 +30,7 @@
    "why": "為什麼看：黃金用美元計價，美元跌、金價通常撐得住。",
    "score": -1,
    "title": "美元走強",
-   "evidence": "美元指數 DXY 102.03，20 個交易日變化 +1.81 點（+1.80%）",
+   "evidence": "美元指數 DXY 102.06，20 個交易日變化 +1.84 點（+1.84%）",
    "links": [
     "DX-Y.NYB",
     "DTWEXBGS"
@@ -70,17 +70,17 @@
     "label": "年底",
     "symbol": "ZQZ26.CBT",
     "date": "2026-10-15",
-    "price": 95.91,
-    "implied": 4.09,
-    "vs_now_bp": 21.0
+    "price": 95.9,
+    "implied": 4.1,
+    "vs_now_bp": 22.0
    },
    {
     "label": "明年年中",
     "symbol": "ZQM27.CBT",
-    "date": "2026-10-14",
-    "price": 95.385,
-    "implied": 4.61,
-    "vs_now_bp": 74.0
+    "date": "2026-10-15",
+    "price": 95.455,
+    "implied": 4.54,
+    "vs_now_bp": 67.0
    }
   ],
   "proxy_2y_minus_ff_bp": 91.0,
@@ -155,12 +155,12 @@
    "date_iso": "2026-10-02",
    "weekday": "週五",
    "days_ago": 13,
-   "previous": null,
-   "forecast": null,
+   "previous": "133K",
+   "forecast": "90K",
    "actual": "29K",
-   "surprise": null,
-   "direction": null,
-   "gold_rule": null,
+   "surprise": -61.0,
+   "direction": "below",
+   "gold_rule": "bull",
    "react": {
     "base": 4216.1,
     "post": 4222.7,
@@ -188,25 +188,25 @@
     "spark_mark": 4
    },
    "day_pct": -0.95,
-   "verdict": "這一場我們還沒存到當時的市場預估值，只能看前值與實際值的變化。黃金在公布後 45 分鐘幾乎沒動（+0.16%）",
-   "no_forecast": true
+   "verdict": "就業低於預期，降息空間變大，照理對黃金偏多。黃金在公布後 45 分鐘幾乎沒動（+0.16%）",
+   "no_forecast": false
   },
   {
    "name": "PCE 物價（聯準會最看重）",
    "period": "8 月",
    "series": "PCEPILFE",
-   "label": "月增率",
+   "label": "年增率",
    "unit": "%",
    "time_tpe": "09/30 20:30",
    "date_iso": "2026-09-30",
    "weekday": "週三",
    "days_ago": 15,
-   "previous": null,
-   "forecast": null,
-   "actual": "0.2%",
-   "surprise": null,
-   "direction": null,
-   "gold_rule": null,
+   "previous": "3.0%",
+   "forecast": "3.3%",
+   "actual": "3.0%",
+   "surprise": -0.29,
+   "direction": "below",
+   "gold_rule": "bull",
    "react": {
     "base": 4226.0,
     "post": 4225.0,
@@ -234,8 +234,8 @@
     "spark_mark": 4
    },
    "day_pct": 0.17,
-   "verdict": "這一場我們還沒存到當時的市場預估值，只能看前值與實際值的變化。黃金在公布後 45 分鐘幾乎沒動（-0.02%）",
-   "no_forecast": true
+   "verdict": "通膨低於預期，降息空間變大，照理對黃金偏多。黃金在公布後 45 分鐘幾乎沒動（-0.02%）",
+   "no_forecast": false
   }
  ],
  "upcoming": [
@@ -403,40 +403,40 @@
   "unit": "%",
   "kind": "fed",
   "stats": {
-   "latest": 4.09,
+   "latest": 4.1,
    "latest_date": "2026-10-15",
-   "chg": "+21 bp vs 現在",
+   "chg": "+22 bp vs 現在",
    "spark": null
   },
   "gold_score": 0,
-  "gold_reason": "比目前利率中點 3.875% 高 21 bp（市場押約 1 碼升息）"
+  "gold_reason": "比目前利率中點 3.875% 高 22 bp（市場押約 1 碼升息）"
  },
  "gold_moves": {
   "d1": {
-   "abs": 57.7,
-   "pct": 1.4
+   "abs": 52.8,
+   "pct": 1.29
   },
   "d7": {
-   "abs": 8.6,
-   "pct": 0.21
+   "abs": 3.7,
+   "pct": 0.09
   },
   "d30": {
-   "abs": -167.2,
-   "pct": -3.86
+   "abs": -172.1,
+   "pct": -3.97
   },
   "date": "2026-10-15",
-  "close": 4165.6
+  "close": 4160.7
  },
  "gold_tech": {
-  "last": 4165.6,
-  "ma50": 4376.7,
+  "last": 4160.7,
+  "ma50": 4376.6,
   "ma200": 4541.7,
   "hi20": 4424.9,
   "lo20": 4107.9,
   "hi52": 5318.4,
   "lo52": 3960.5,
-  "vs_ma50": -4.82,
-  "vs_ma200": -8.28,
+  "vs_ma50": -4.93,
+  "vs_ma200": -8.39,
   "date": "2026-10-15",
   "trend": "空頭結構：價格在 50 與 200 日均線之下",
   "stance": "bear",
@@ -584,7 +584,7 @@
   }
  },
  "dxy": {
-  "level": 102.03,
+  "level": 102.06,
   "date": "2026-10-15",
   "zone": "偏強",
   "zone_gold": "對黃金偏不利",
@@ -625,7 +625,7 @@
   "low10y": 89.13,
   "high10y": 112.12,
   "ma200": 99.45,
-  "vs_ma200_pct": 2.59
+  "vs_ma200_pct": 2.62
  },
  "econ": [
   {
@@ -1152,17 +1152,17 @@
    "unit": "美元／盎司",
    "source": "yahoo",
    "stats": {
-    "latest": 4165.6,
+    "latest": 4160.7,
     "latest_date": "2026-10-15",
     "prev": 4107.9,
     "prev_date": "2026-10-14",
-    "chg": "+57.7 美元",
-    "chg5": "+8.6 美元",
-    "chg20": "-234.1 美元",
-    "chg5_pct": "+0.21%",
-    "chg20_pct": "-5.32%",
-    "raw_chg5": 8.6001,
-    "raw_chg20": -234.1001,
+    "chg": "+52.8 美元",
+    "chg5": "+3.7 美元",
+    "chg20": "-239.0 美元",
+    "chg5_pct": "+0.09%",
+    "chg20_pct": "-5.43%",
+    "raw_chg5": 3.7002,
+    "raw_chg20": -239.0,
     "spark": [
      4351.8999,
      4332.7998,
@@ -1187,7 +1187,7 @@
      4190.6001,
      4177.2998,
      4107.8999,
-     4165.6001
+     4160.7002
     ],
     "spark_dates": [
      "2026-09-14",
@@ -1215,7 +1215,7 @@
      "2026-10-14",
      "2026-10-15"
     ],
-    "ma200": 4541.7
+    "ma200": 4541.68
    },
    "gold_score": null,
    "gold_reason": "觀察對象本身"
@@ -1226,17 +1226,17 @@
    "unit": "點",
    "source": "yahoo",
    "stats": {
-    "latest": 102.03,
+    "latest": 102.06,
     "latest_date": "2026-10-15",
     "prev": 102.55,
     "prev_date": "2026-10-14",
-    "chg": "-0.52 點",
-    "chg5": "-0.11 點",
-    "chg20": "+1.81 點",
-    "chg5_pct": "-0.11%",
-    "chg20_pct": "+1.80%",
-    "raw_chg5": -0.114,
-    "raw_chg20": 1.806,
+    "chg": "-0.49 點",
+    "chg5": "-0.08 點",
+    "chg20": "+1.84 點",
+    "chg5_pct": "-0.08%",
+    "chg20_pct": "+1.84%",
+    "raw_chg5": -0.08,
+    "raw_chg20": 1.84,
     "spark": [
      99.46,
      99.65,
@@ -1261,7 +1261,7 @@
      102.58,
      102.18,
      102.55,
-     102.026
+     102.06
     ],
     "spark_dates": [
      "2026-09-14",
@@ -1292,7 +1292,7 @@
     "ma200": 99.45
    },
    "gold_score": -2,
-   "gold_reason": "20 日 +1.80%"
+   "gold_reason": "20 日 +1.84%"
   },
   {
    "id": "DFII10",
