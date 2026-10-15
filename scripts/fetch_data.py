@@ -766,6 +766,13 @@ def next_event(now_tpe: datetime):
 # ---------------------------------------------------------------------------
 FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
 
+# 開始自動存檔之前的場次，預估值與前值由使用者依當時的財經行事曆手動補登。
+# 只在 consensus.json 還沒有這筆時才寫入，之後抓到的真實資料不會被蓋掉。
+SEED_CONSENSUS = {
+    "2026-10-02T12:30|Non-Farm Employment Change": {"f": "90K", "p": "133K"},
+    "2026-09-30T12:30|Core PCE Price Index y/y": {"f": "3.3%", "p": "3.0%"},
+}
+
 
 def update_consensus(seed: bool) -> dict:
     """把 ForexFactory 公開行事曆的「市場預估值」累積存進 data/consensus.json。
@@ -781,6 +788,8 @@ def update_consensus(seed: bool) -> dict:
             store = json.loads(p.read_text(encoding="utf-8"))
         except ValueError:
             store = {}
+    for k, v in SEED_CONSENSUS.items():
+        store.setdefault(k, v)
     if seed:
         return store
     j = json.loads(http_get(FF_URL))
@@ -891,16 +900,21 @@ def gold_reaction(bars, t_utc: datetime, minutes: int = 45):
 
 # 每個事件要對到 ForexFactory 的哪一個標題、實際值怎麼從 FRED 算
 EVENT_MAP = {
-    "CPIAUCSL": dict(ff=["CPI y/y"], metric="yoy", unit="%", label="年增率",
-                     hot="inflation"),
-    "PPIFIS":   dict(ff=["PPI m/m"], metric="mom", unit="%", label="月增率",
-                     hot="inflation"),
-    "PCEPILFE": dict(ff=["Core PCE Price Index m/m"], metric="mom", unit="%", label="月增率",
-                     hot="inflation"),
-    "PAYEMS":   dict(ff=["Non-Farm Employment Change"], metric="diff_k", unit="千人", label="新增就業",
-                     hot="growth"),
-    "DFF":      dict(ff=["Federal Funds Rate"], metric="fomc", unit="%", label="利率區間",
-                     hot="rates"),
+    # variants 由上往下找：哪一個口徑有存到市場預估值就用哪一個，實際值也跟著用同一個口徑算，
+    # 才不會發生「預估是月增率、實際是年增率」這種對不起來的狀況。
+    "CPIAUCSL": dict(hot="inflation", variants=[
+        dict(ff="CPI y/y", metric="yoy", unit="%", label="年增率"),
+        dict(ff="CPI m/m", metric="mom", unit="%", label="月增率")]),
+    "PPIFIS": dict(hot="inflation", variants=[
+        dict(ff="PPI y/y", metric="yoy", unit="%", label="年增率"),
+        dict(ff="PPI m/m", metric="mom", unit="%", label="月增率")]),
+    "PCEPILFE": dict(hot="inflation", variants=[
+        dict(ff="Core PCE Price Index y/y", metric="yoy", unit="%", label="年增率"),
+        dict(ff="Core PCE Price Index m/m", metric="mom", unit="%", label="月增率")]),
+    "PAYEMS": dict(hot="growth", variants=[
+        dict(ff="Non-Farm Employment Change", metric="diff_k", unit="千人", label="新增就業")]),
+    "DFF": dict(hot="rates", variants=[
+        dict(ff="Federal Funds Rate", metric="fomc", unit="%", label="利率區間")]),
 }
 
 
@@ -924,12 +938,18 @@ def released_events(now_tpe: datetime, raw_month: dict, consensus: dict, bars, g
     out = []
     for t, ev in past[:limit]:
         sid = ev.get("series")
-        cfg = EVENT_MAP.get(sid)
-        if not cfg:
+        spec = EVENT_MAP.get(sid)
+        if not spec:
             continue
         t_utc = t.astimezone(timezone.utc)
         key_t = t_utc.strftime("%Y-%m-%dT%H:%M")
-        hit = next((consensus[key_t + "|" + nm] for nm in cfg["ff"] if key_t + "|" + nm in consensus), None)
+        hit, var = None, spec["variants"][0]
+        for v in spec["variants"]:
+            got = consensus.get(key_t + "|" + v["ff"])
+            if got and (got.get("f") or got.get("p")):
+                hit, var = got, v
+                break
+        cfg = dict(var, hot=spec["hot"])
         fc_raw = (hit or {}).get("f") or None
         pv_raw = (hit or {}).get("p") or None
 
