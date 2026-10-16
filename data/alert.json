@@ -1,30 +1,37 @@
 {
- "key": "calm|",
- "status": "calm",
- "since": "10/16 08:24",
- "since_iso": "2026-10-16T08:24+08:00",
- "triggers": [],
+ "key": "alert|VIX 恐慌指數",
+ "status": "alert",
+ "since": "10/17 02:48",
+ "since_iso": "2026-10-17T02:48+08:00",
+ "triggers": [
+  {
+   "name": "VIX 恐慌指數",
+   "why": "市場恐慌急升",
+   "price": 20.97,
+   "chg_pct": 27.4
+  }
+ ],
  "readings": [
   {
    "name": "黃金",
-   "price": 4176.4,
-   "chg_pct": 0.15
+   "price": 4179.3,
+   "chg_pct": 0.22
   },
   {
    "name": "VIX 恐慌指數",
-   "price": 16.46,
-   "chg_pct": 7.79
+   "price": 20.97,
+   "chg_pct": 27.4
   },
   {
    "name": "美元指數 DXY",
-   "price": 102.08,
-   "chg_pct": 0.02
+   "price": 101.84,
+   "chg_pct": -0.21
   },
   {
    "name": "WTI 原油",
-   "price": 96.0,
-   "chg_pct": -0.52
+   "price": 99.29,
+   "chg_pct": 2.89
   }
  ],
- "note": "目前沒有劇烈波動"
+ "note": "市場劇烈波動中：總經分數可能還沒反映，請以即時行情為準"
 }
