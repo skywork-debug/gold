@@ -50,5 +50,25 @@
 "2026-10-16T03:30|Fed Chairman Warsh Speaks": {
 "f": "",
 "p": ""
+},
+"2026-10-22T12:30|Unemployment Claims": {
+"f": "200K",
+"p": "199K"
+},
+"2026-10-23T13:45|Flash Manufacturing PMI": {
+"f": "55.5",
+"p": "57.0"
+},
+"2026-10-23T13:45|Flash Services PMI": {
+"f": "58.0",
+"p": "58.7"
+},
+"2026-10-23T14:00|Revised UoM Consumer Sentiment": {
+"f": "46.3",
+"p": "46.3"
+},
+"2026-10-23T14:00|Revised UoM Inflation Expectations": {
+"f": "",
+"p": "4.7%"
 }
 }
