@@ -107,25 +107,50 @@ def parse_csv(text: str) -> list[tuple[str, float]]:
     return rows
 
 
+def _fred_csv(series: str, start: str) -> list[tuple[str, float]]:
+    return parse_csv(http_get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}", retries=2))
+
+
 def fetch_fred(series: str, start: str, seed: bool) -> list[tuple[str, float]]:
+    """優先走官方 JSON API，失敗就改走 fredgraph.csv。
+
+    2026-10-22 起 api.stlouisfed.org 對 GitHub 機房 IP 回 200 但內容不是 JSON
+    （看起來是防爬蟲的攔截頁），原本沒有退路，19 項 FRED 數據會一起掛掉。
+    兩條路是不同主機，其中一條被擋時另一條通常還活著。
+    """
     if seed:
         p = SEED_DIR / f"{series}.csv"
         return parse_csv(p.read_text()) if p.exists() else []
     key = os.environ.get("FRED_API_KEY")
     if key:
-        url = ("https://api.stlouisfed.org/fred/series/observations?"
-               + urllib.parse.urlencode(dict(series_id=series, api_key=key, file_type="json", observation_start=start)))
-        j = json.loads(http_get(url))
-        out = []
-        for o in j.get("observations", []):
+        try:
+            url = ("https://api.stlouisfed.org/fred/series/observations?"
+                   + urllib.parse.urlencode(dict(series_id=series, api_key=key, file_type="json",
+                                                 observation_start=start)))
+            body = http_get(url, retries=2)
             try:
-                out.append((o["date"], float(o["value"])))
+                j = json.loads(body)
             except ValueError:
-                pass
-        return out
-    # 沒有 API key 時走 fredgraph.csv（GitHub Actions 的機房 IP 偶爾會被 FRED 擋，建議設定 FRED_API_KEY）
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start}"
-    return parse_csv(http_get(url))
+                head = re.sub(r"\s+", " ", body[:120]).strip()
+                print(f"[warn] FRED API 回傳的不是 JSON（{series}），改走 fredgraph.csv。開頭：{head}", flush=True)
+                return _fred_csv(series, start)
+            if "observations" not in j:
+                print(f"[warn] FRED API 沒有 observations（{series}）：{j.get('error_message', '')[:80]}"
+                      "，改走 fredgraph.csv", flush=True)
+                return _fred_csv(series, start)
+            out = []
+            for o in j["observations"]:
+                try:
+                    out.append((o["date"], float(o["value"])))
+                except ValueError:
+                    pass
+            if out:
+                return out
+            print(f"[warn] FRED API 回傳空資料（{series}），改走 fredgraph.csv", flush=True)
+        except Exception as ex:  # noqa: BLE001
+            print(f"[warn] FRED API 失敗（{series}：{type(ex).__name__}），改走 fredgraph.csv", flush=True)
+        return _fred_csv(series, start)
+    return _fred_csv(series, start)
 
 
 def fetch_yahoo(symbol: str, rng: str, seed: bool, interval: str = "1d") -> list[tuple[str, float]]:
@@ -1091,6 +1116,7 @@ def main():
         prev["_gold_moves"] = _old.get("gold_moves")
         prev["_gold_tech"] = _old.get("gold_tech")
         prev["_cot"] = _old.get("cot")
+        prev["_raw_cache"] = _old.get("raw_cache") or {}
         prev["_released"] = _old.get("released")
     except Exception:  # noqa: BLE001
         pass
@@ -1225,8 +1251,20 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"[warn] 黃金 15 分線: {e}", flush=True)
         bars15 = []
+    # 已公布數據的「實際值」要能撐過 FRED 斷線：把需要的原始月資料留一份在 data.json，
+    # 這次抓不到就沿用上次那份，卡片才不會整欄變成「—」。
+    CACHE_IDS = list(EVENT_MAP) + ["DFEDTARL", "DFEDTARU"]
+    old_cache = prev.get("_raw_cache") or {}
+    raw_cache, raw_month_cached = {}, dict(raw_month)
+    for sid in CACHE_IDS:
+        rows = raw_month.get(sid)
+        if rows:
+            raw_cache[sid] = [[d, v] for d, v in rows[-40:]]
+        elif old_cache.get(sid):
+            raw_cache[sid] = old_cache[sid]
+            raw_month_cached[sid] = [(d, v) for d, v in old_cache[sid]]
     try:
-        released = released_events(now_tpe, raw_month, consensus, bars15, gold_rows)
+        released = released_events(now_tpe, raw_month_cached, consensus, bars15, gold_rows)
     except Exception as e:  # noqa: BLE001
         errors.append("已公布數據：整理時出錯，沿用上次資料")
         print(f"[warn] released: {e}", flush=True)
@@ -1251,6 +1289,7 @@ def main():
         fed=fedx,
         next_event=nxt,
         released=released,
+        raw_cache=raw_cache,
         upcoming=upcoming,
         categories=categories,
         fed_item=fed_item,
