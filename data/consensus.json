@@ -70,5 +70,41 @@
 "2026-10-23T14:00|Revised UoM Inflation Expectations": {
 "f": "",
 "p": "4.7%"
+},
+"2026-10-27T14:00|CB Consumer Confidence": {
+"f": "80.5",
+"p": "81.9"
+},
+"2026-10-28T18:00|FOMC Statement": {
+"f": "",
+"p": ""
+},
+"2026-10-28T18:00|Federal Funds Rate": {
+"f": "4.00%",
+"p": "4.00%"
+},
+"2026-10-28T18:30|FOMC Press Conference": {
+"f": "",
+"p": ""
+},
+"2026-10-29T12:30|Advance GDP Price Index q/q": {
+"f": "3.5%",
+"p": "6.2%"
+},
+"2026-10-29T12:30|Advance GDP q/q": {
+"f": "3.2%",
+"p": "1.5%"
+},
+"2026-10-29T12:30|Core PCE Price Index m/m": {
+"f": "0.3%",
+"p": "0.2%"
+},
+"2026-10-29T12:30|Unemployment Claims": {
+"f": "198K",
+"p": "194K"
+},
+"2026-10-30T12:30|Employment Cost Index q/q": {
+"f": "0.8%",
+"p": "0.9%"
 }
 }
