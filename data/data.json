@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-31T19:13:23+00:00",
- "generated_at_tpe": "11/01 03:13",
+ "generated_at": "2026-11-01T05:52:15+00:00",
+ "generated_at_tpe": "11/01 13:52",
  "mode": "live",
  "verdict": {
   "score": 1.9,
@@ -1665,7 +1665,7 @@
     "gold": "對黃金不利"
    }
   ],
-  "pct10y": 73,
+  "pct10y": 74,
   "median10y": 98.34,
   "low10y": 89.13,
   "high10y": 112.12,
