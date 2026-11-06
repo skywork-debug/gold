@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import argparse
+import calendar
 import csv
 import io
 import json
@@ -321,12 +322,57 @@ def fed_expectations(today: date, mid: float | None, eff: float | None, dgs2: fl
             rows = []
         if rows and mid is not None:
             implied = 100 - rows[-1][1]
+            base = eff if eff is not None else mid        # 期貨結算看的是有效利率，不是目標中點
+            prob, frac = hike_probability(implied, base, d.strftime("%Y-%m"))
             horizons.append(dict(label=label, symbol=sym, date=rows[-1][0], price=r(rows[-1][1], 3),
-                                 implied=r(implied, 2), vs_now_bp=r((implied - mid) * 100, 0)))
+                                 implied=r(implied, 2), vs_now_bp=r((implied - mid) * 100, 0),
+                                 month=d.strftime("%Y-%m"), prob=prob, day_frac=frac))
     proxy = None
     if dgs2 is not None and eff is not None:
         proxy = r((dgs2 - eff) * 100, 0)
     return dict(target_mid=mid, effective=eff, horizons=horizons, proxy_2y_minus_ff_bp=proxy)
+
+
+def _fomc_et_date(ym: str):
+    """從 calendar.json 找出該月的 FOMC 決議日（美東日期）。"""
+    pth = DATA_DIR / "calendar.json"
+    if not pth.exists():
+        return None
+    try:
+        cal = json.loads(pth.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    hits = []
+    for ev in cal.get("events", []):
+        if "FOMC" not in (ev.get("name") or ""):
+            continue
+        try:
+            tt = datetime.strptime(ev["time_tpe"], "%Y-%m-%d %H:%M").replace(tzinfo=TAIPEI)
+        except (KeyError, ValueError):
+            continue
+        et = tt.astimezone(timezone.utc) - timedelta(hours=5)   # 美東約 UTC−5（冬令）
+        if et.strftime("%Y-%m") == ym:
+            hits.append(et.date())
+    return hits[0] if len(hits) == 1 else None
+
+
+def hike_probability(implied, effr, ym):
+    """把期貨隱含利率換算成「該月會議升／降一碼」的機率。
+
+    關鍵：30 天聯邦基金期貨結算的是**當月每日利率的平均**，不是月底利率。
+    會議在月中，只有後面那些天吃得到新利率，所以 +12 bp 這種看似很小的數字
+    其實可能對應到七成的升息機率。原本直接把 bp 除以 25 當「碼數」是錯的。
+    回傳 (機率, 當月受影響天數比例)；機率為正代表升息、負代表降息。
+    """
+    d = _fomc_et_date(ym)
+    if d is None or implied is None or effr is None:
+        return None, None
+    ndays = calendar.monthrange(d.year, d.month)[1]
+    eff_day = d.day + 1                       # 決議隔天生效
+    frac = (ndays - eff_day + 1) / ndays
+    if frac <= 0.05:
+        return None, None
+    return r((implied - effr) / (0.25 * frac), 2), r(frac, 3)
 
 
 # ---------------------------------------------------------------------------
@@ -480,6 +526,65 @@ def dxy_context(st, seed):
 # ---------------------------------------------------------------------------
 # 每個指標對黃金的加減分（−2 … +2）與分類
 # ---------------------------------------------------------------------------
+# 這些指標原本只看「最近 20 天變化」，完全沒看「現在的水位高不高」。
+# 高檔小跌會被算成強烈偏多，但高實質殖利率對黃金的壓力不會因為跌了幾 bp 就消失。
+# 所以另外抓 10 年歷史算百分位，水位分數與變化分數各半。
+LEVEL_SERIES = ("DFII10", "DGS2", "BAMLH0A0HYM2")
+
+
+def level_percentiles(seed: bool, st_by_id: dict, dxy_pct):
+    """回傳 {指標: 目前數值在近 10 年的百分位}。抓不到就略過，退回只看變化。"""
+    out = {}
+    start = (date.today() - timedelta(days=10 * 365)).isoformat()
+    for sid in LEVEL_SERIES:
+        st = st_by_id.get(sid)
+        if not st or st.get("latest") is None:
+            continue
+        try:
+            rows = fetch_fred(sid, start, seed)
+        except Exception as e:  # noqa: BLE001
+            print(f"[warn] {sid} 10 年水位抓取失敗（{type(e).__name__}），這項只看變化", flush=True)
+            continue
+        # fredgraph.csv 的 cosd 有時會被忽略、只回最近 3 年（BAMLH0A0HYM2 就會）。
+        # 歷史不夠長算出來的百分位會嚴重失真（少了 2020 年那種極端值），寧可不給分。
+        if len(rows) < 800:
+            continue
+        span_days = (date.fromisoformat(rows[-1][0]) - date.fromisoformat(rows[0][0])).days
+        if span_days < 7 * 365:
+            print(f"[warn] {sid} 只拿到 {span_days // 365} 年歷史，不足以算 10 年水位，這項只看變化", flush=True)
+            continue
+        vals = sorted(v for _, v in rows)
+        out[sid] = round(sum(1 for v in vals if v <= st["latest"]) / len(vals) * 100)
+    if dxy_pct is not None:
+        out["DX-Y.NYB"] = dxy_pct
+    return out
+
+
+def _lv_opponent(pct):
+    """黃金的對手（實質殖利率、2 年期、美元）：水位越高對黃金越不利。"""
+    if pct is None:
+        return None
+    return -2 if pct >= 85 else -1 if pct >= 65 else 2 if pct <= 15 else 1 if pct <= 35 else 0
+
+
+def _lv_spread(pct):
+    """信用利差：越寬＝市場越怕＝避險買盤偏多；極窄＝市場自滿，略偏空。"""
+    if pct is None:
+        return None
+    return 2 if pct >= 85 else 1 if pct >= 65 else -1 if pct <= 15 else 0
+
+
+def _mix(chg, lv):
+    """變化分數與水位分數各半。沒有水位資料時只用變化。"""
+    if lv is None:
+        return chg
+    return r((chg + lv) / 2, 1)
+
+
+def _lv_word(pct):
+    return "偏高" if pct >= 65 else "偏低" if pct <= 35 else "中間"
+
+
 def _band(x, cuts):
     """cuts = (強負, 負, 正, 強正) 門檻；x ≤ 強負 → −2 … x ≥ 強正 → +2"""
     a, b, c, d = cuts
@@ -567,13 +672,37 @@ def indicator_score(sid, st, extra, ctx):
         return sc, f"比近 12 個月低點高 {rise:.1f} 個百分點（升 0.5 以上是衰退警訊）"
     if sid == "DGS2":
         bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
-        return -_band(bp, (-20, -8, 8, 20)), (f"20 日 {bp:+.0f} bp（上升＝市場加碼押升息）" if bp is not None else "資料不足")
+        if bp is None:
+            return 0, "資料不足"
+        chg = -_band(bp, (-20, -8, 8, 20))
+        pct = ctx.get("pct10y", {}).get(sid)
+        lv = _lv_opponent(pct)
+        why = f"20 日 {bp:+.0f} bp（上升＝市場加碼押升息）→ 變化 {chg:+d}"
+        if lv is not None:
+            why = f"水位 {st['latest']:.2f}%，近 10 年第 {pct} 百分位（{_lv_word(pct)}）→ 水位 {lv:+d}；" + why
+        return _mix(chg, lv), why
     if sid == "DFII10":
         bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
-        return -_band(bp, (-25, -10, 10, 25)), (f"20 日 {bp:+.0f} bp（黃金最直接的對手）" if bp is not None else "資料不足")
+        if bp is None:
+            return 0, "資料不足"
+        chg = -_band(bp, (-25, -10, 10, 25))
+        pct = ctx.get("pct10y", {}).get(sid)
+        lv = _lv_opponent(pct)
+        why = f"20 日 {bp:+.0f} bp → 變化 {chg:+d}（黃金最直接的對手）"
+        if lv is not None:
+            why = f"水位 {st['latest']:.2f}%，近 10 年第 {pct} 百分位（{_lv_word(pct)}）→ 水位 {lv:+d}；" + why
+        return _mix(chg, lv), why
     if sid == "DX-Y.NYB":
         pc = _pct20(st)
-        return -_band(pc, (-1.5, -0.5, 0.5, 1.5)), (f"20 日 {pc:+.2f}%" if pc is not None else "資料不足")
+        if pc is None:
+            return 0, "資料不足"
+        chg = -_band(pc, (-1.5, -0.5, 0.5, 1.5))
+        pct = ctx.get("pct10y", {}).get(sid)
+        lv = _lv_opponent(pct)
+        why = f"20 日 {pc:+.2f}% → 變化 {chg:+d}"
+        if lv is not None:
+            why = f"水位 {st['latest']:.2f}，近 10 年第 {pct} 百分位（{_lv_word(pct)}）→ 水位 {lv:+d}；" + why
+        return _mix(chg, lv), why
     if sid == "DCOILWTICO":
         pc = _pct20(st)
         if pc is None and len(st["spark"]) >= 2:
@@ -593,7 +722,15 @@ def indicator_score(sid, st, extra, ctx):
         return sc, f"VIX {v:.1f}（20 以上開始緊張，資金找避險）"
     if sid == "BAMLH0A0HYM2":
         bp = st["raw_chg20"] * 100 if st.get("raw_chg20") is not None else None
-        return _band(bp, (-50, -20, 20, 50)), (f"20 日 {bp:+.0f} bp（擴大＝市場怕違約）" if bp is not None else "資料不足")
+        if bp is None:
+            return 0, "資料不足"
+        chg = _band(bp, (-50, -20, 20, 50))
+        pct = ctx.get("pct10y", {}).get(sid)
+        lv = _lv_spread(pct)
+        why = f"20 日 {bp:+.0f} bp（擴大＝市場怕違約）→ 變化 {chg:+d}"
+        if lv is not None:
+            why = f"水位 {st['latest']:.2f}%，近 10 年第 {pct} 百分位（{_lv_word(pct)}）→ 水位 {lv:+d}；" + why
+        return _mix(chg, lv), why
     return 0, ""
 
 
@@ -618,11 +755,21 @@ def build_categories(pool, fedx):
     h = fedx["horizons"][0] if fedx.get("horizons") else None
     if h:
         bp = h["vs_now_bp"]
+        prob = h.get("prob")
+        if prob is None:
+            score = -_band(bp, (-50, -25, 25, 50))
+            tail = f"（市場押約 {abs(round(bp / 25))} 碼{'升息' if bp > 0 else '降息'}）" if bp else ""
+        else:
+            # 期望變動 bp ＝ 機率 × 一碼。用它評分，而不是用「月平均」那個被稀釋過的 bp。
+            score = -_band(prob * 25, (-20, -8, 8, 20))
+            word = "升息" if prob > 0 else "降息"
+            tail = (f"（市場押 12 月會議{word}機率約 {abs(prob) * 100:.0f}%）" if abs(prob) <= 1.2
+                    else f"（市場押{word}約 {abs(prob):.1f} 碼）")
         pool["FEDX"] = dict(id="FEDX", name="降息預期（期貨隱含年底利率）", unit="%", kind="fed",
                             stats=dict(latest=h["implied"], latest_date=h["date"], chg=f"{bp:+.0f} bp vs 現在", spark=None),
-                            gold_score=-_band(bp, (-50, -25, 25, 50)),
+                            gold_score=score,
                             gold_reason=(f"比目前利率中點 {fedx['target_mid']:.3f}% {'高' if bp > 0 else '低'} {abs(bp):.0f} bp"
-                                         f"（市場押約 {abs(round(bp/25))} 碼{'升息' if bp > 0 else '降息'}）") if bp else "與目前利率相同")
+                                         + tail) if bp else "與目前利率相同")
     out = []
     for c in CATEGORIES:
         items = [pool[i] for i in c["ids"] if i in pool and pool[i].get("stats")]
@@ -1223,11 +1370,19 @@ def main():
         dict(key="risk", question="避險需求有沒有升高？", why="為什麼看：油價、恐慌指數、信用利差反映市場怕不怕。",
              score=s4, title=t4, evidence=src4, links=["DCOILWTICO", "VIXCLS", "BAMLH0A0HYM2"]),
     ]
+    dxy = dxy_context(st_by_id.get("DX-Y.NYB"), seed)   # 水位分數要用它的 10 年百分位，所以提前算
     # ---- 每個指標加減分（依利率環境判斷傳導方向）----
     h0 = fedx["horizons"][0] if fedx.get("horizons") else None
     bp0 = h0["vs_now_bp"] if h0 else fedx.get("proxy_2y_minus_ff_bp")
-    regime = "hike" if bp0 is not None and bp0 >= 25 else "cut" if bp0 is not None and bp0 <= -25 else "neutral"
-    ctx = dict(regime=regime, vix=(st_by_id.get("VIXCLS") or {}).get("latest") or 0)
+    p0 = h0.get("prob") if h0 else None
+    if p0 is not None:
+        # 機率過半就當成市場在押那個方向。用 bp 判斷會嚴重低估，因為期貨是月平均。
+        regime = "hike" if p0 >= 0.5 else "cut" if p0 <= -0.5 else "neutral"
+    else:
+        regime = "hike" if bp0 is not None and bp0 >= 25 else "cut" if bp0 is not None and bp0 <= -25 else "neutral"
+    fedx["regime_prob"] = p0
+    ctx = dict(regime=regime, vix=(st_by_id.get("VIXCLS") or {}).get("latest") or 0,
+               pct10y=level_percentiles(seed, st_by_id, (dxy or {}).get("pct10y")))
     for it in econ + markets:
         ex = {k: it.get(k) for k in ("ann3m", "yoy")}
         it["gold_score"], it["gold_reason"] = indicator_score(it["id"], it.get("stats"), ex, ctx)
@@ -1278,7 +1433,6 @@ def main():
     sp = DATA_DIR / "structural.json"
     structural = json.loads(sp.read_text(encoding="utf-8")) if sp.exists() else None
     fed_item = pool.get("FEDX")
-    dxy = dxy_context(st_by_id.get("DX-Y.NYB"), seed)
 
     out = dict(
         generated_at=now_utc.isoformat(timespec="seconds"),
